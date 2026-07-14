@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub di Stimolazione Cognitiva</title>
-    <!-- Libreria per le icone professionali -->
+    <!-- Icone professionali FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -15,101 +15,119 @@
         }
 
         body {
-            background-color: #f8fafc;
-            color: #1e293b;
-            padding-bottom: 60px;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding-bottom: 80px;
         }
 
         /* Header Principale */
         header {
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            background: linear-gradient(135deg, #1e3a8a, #0284c7);
             color: white;
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.15);
             margin-bottom: 40px;
         }
 
         header h1 {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
 
         header p {
-            margin-top: 10px;
-            font-size: 1.1rem;
-            color: #bfdbfe;
-            max-width: 600px;
+            margin-top: 12px;
+            font-size: 1.15rem;
+            color: #e0f2fe;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* Contenitore Griglia */
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
             padding: 0 20px;
         }
 
-        .grid-esercizi {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
+        /* Sezione Area Cognitiva */
+        .area-sezione {
+            margin-bottom: 50px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
         }
 
-        /* Card dell'Esercizio */
+        .area-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .area-header i {
+            font-size: 1.8rem;
+        }
+
+        .area-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Colore specifico per ogni Area */
+        .area-attenzione .area-header i { color: #ef4444; }
+        .area-memoria .area-header i { color: #3b82f6; }
+        .area-funzioni .area-header i { color: #10b981; }
+        .area-linguaggio .area-header i { color: #f59e0b; }
+        .area-visuo .area-header i { color: #8b5cf6; }
+        .area-orientamento .area-header i { color: #06b6d4; }
+
+        /* Griglia delle Card */
+        .grid-esercizi {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card Singola */
         .card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px 24px;
-            text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            align-items: center;
             border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: #bfdbfe;
+            transform: translateY(-3px);
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
 
-        .card-icon {
-            width: 70px;
-            height: 70px;
-            background-color: #eff6ff;
-            color: #2563eb;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            transition: background-color 0.2s, color 0.2s;
-        }
-
-        .card:hover .card-icon {
-            background-color: #2563eb;
-            color: white;
-        }
+        /* Hover dinamico in base all'area */
+        .area-attenzione .card:hover { border-color: #fca5a5; }
+        .area-memoria .card:hover { border-color: #93c5fd; }
+        .area-funzioni .card:hover { border-color: #6ee7b7; }
+        .area-linguaggio .card:hover { border-color: #fde047; }
+        .area-visuo .card:hover { border-color: #c4b5fd; }
+        .area-orientamento .card:hover { border-color: #67e8f9; }
 
         .card h3 {
-            font-size: 1.25rem;
+            font-size: 1.05rem;
             color: #0f172a;
-            margin-bottom: 10px;
             font-weight: 600;
-        }
-
-        .card p {
-            font-size: 0.9rem;
-            color: #64748b;
-            line-height: 1.5;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -117,42 +135,106 @@
 
     <header>
         <h1>Hub di Stimolazione Cognitiva</h1>
-        <p>Pannello di controllo clinico per le attività di riabilitazione e potenziamento cognitivo.</p>
+        <p>Piattaforma centralizzata per il potenziamento e la riabilitazione neuropsicologica.</p>
     </header>
 
     <div class="container">
-        <!-- Iniziamo con una griglia unica, che poi organizzeremo in sezioni per aree -->
-        <div class="grid-esercizi">
-            
-            <!-- ESERCIZIO 1 -->
-            <!-- Usiamo il link verso esercizio.html passando come parametro il nome del file reale -->
-            <a href="esercizio.html?file=catena_vincente.html" class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-link"></i>
-                </div>
-                <h3>Catena Vincente</h3>
-                <p>Esercizio di associazione verbale e fluidità lessicale sequenziale.</p>
-            </a>
 
-            <!-- ESERCIZIO 2 -->
-            <a href="esercizio.html?file=semaforo_parole.html" class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-traffic-light"></i>
-                </div>
-                <h3>Il Semaforo delle Parole</h3>
-                <p>Inibizione della risposta automatica e controllo dell'attenzione (Effetto Stroop).</p>
-            </a>
+        <!-- 1. ATTENZIONE E CONCENTRAZIONE -->
+        <section class="area-sezione area-attenzione">
+            <div class="area-header">
+                <i class="fa-solid fa-bullseye"></i>
+                <h2>Attenzione e Velocità di Elaborazione</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=Attenzione%20alternata.html" class="card"><h3>Attenzione Alternata</h3></a>
+                <a href="esercizio.html?file=Cancellazione%20di%20H.html" class="card"><h3>Cancellazione di H</h3></a>
+                <a href="esercizio.html?file=Conta%20i%20numeri%20e%20le%20lettere.html" class="card"><h3>Conta Numeri e Lettere</h3></a>
+                <a href="esercizio.html?file=Doppio%20compito%20e%20velocità.html" class="card"><h3>Doppio Compito e Velocità</h3></a>
+                <a href="esercizio.html?file=Il%20semaforo%20delle%20parole.html" class="card"><h3>Il Semaforo delle Parole</h3></a>
+                <a href="esercizio.html?file=Stroop.html" class="card"><h3>Stroop Base</h3></a>
+            </div>
+        </section>
 
-            <!-- ESERCIZIO 3 -->
-            <a href="esercizio.html?file=eco_sequenza.html" class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-repeat"></i>
-                </div>
-                <h3>Eco-Sequenza</h3>
-                <p>Allenamento della memoria di lavoro visuo-spaziale e ritenzione sequenziale.</p>
-            </a>
+        <!-- 2. MEMORIA -->
+        <section class="area-sezione area-memoria">
+            <div class="area-header">
+                <i class="fa-solid fa-brain"></i>
+                <h2>Memoria e Memoria di Lavoro</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=Calcolo%20e%20memoria.html" class="card"><h3>Calcolo e Memoria</h3></a>
+                <a href="esercizio.html?file=Inibizione%20e%20memoria%20di%20lavoro.html" class="card"><h3>Inibizione e Memoria di Lavoro</h3></a>
+                <a href="esercizio.html?file=Memoria%20di%20lavoro%20avanzato.html" class="card"><h3>Memoria di Lavoro Avanzata</h3></a>
+                <a href="esercizio.html?file=Memoria%20di%20prosa%20con%20distrattori.html" class="card"><h3>Memoria di Prosa con Distrattori</h3></a>
+                <a href="esercizio.html?file=Memoria%20visuospaziale%20con%20domande.html" class="card"><h3>Memoria Visuospaziale con Domande</h3></a>
+                <a href="esercizio.html?file=Memoria%20visuospaziale%20con%20numeri.html" class="card"><h3>Memoria Visuospaziale con Numeri</h3></a>
+                <a href="esercizio.html?file=Memoria%20visuospaziale%20il%20Giardino.html" class="card"><h3>Memoria Visuospaziale: Il Giardino</h3></a>
+                <a href="esercizio.html?file=Rispondi%20al%20contrario%20e%20ricorda%20la%20parola.html" class="card"><h3>Rispondi al Contrario e Ricorda</h3></a>
+            </div>
+        </section>
 
-        </div>
+        <!-- 3. FUNZIONI ESECUTIVE -->
+        <section class="area-sezione area-funzioni">
+            <div class="area-header">
+                <i class="fa-solid fa-gears"></i>
+                <h2>Funzioni Esecutive e Logica</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=Il%20cifrario.html" class="card"><h3>Il Cifrario</h3></a>
+                <a href="esercizio.html?file=N%20back.html" class="card"><h3>N-Back Standard</h3></a>
+                <a href="esercizio.html?file=N%20back%20semantico.html" class="card"><h3>N-Back Semantico</h3></a>
+                <a href="esercizio.html?file=Relazioni%20logiche.html" class="card"><h3>Relazioni Logiche</h3></a>
+                <a href="esercizio.html?file=Rispondi%20il%20contrario.html" class="card"><h3>Rispondi il Contrario</h3></a>
+                <a href="esercizio.html?file=Set%20shifting.html" class="card"><h3>Set Shifting</h3></a>
+                <a href="esercizio.html?file=Trova%20l'intruso.html" class="card"><h3>Trova l'Intruso</h3></a>
+            </div>
+        </section>
+
+        <!-- 4. LINGUAGGIO -->
+        <section class="area-sezione area-linguaggio">
+            <div class="area-header">
+                <i class="fa-solid fa-comments"></i>
+                <h2>Linguaggio e Abilità Verbali</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=Catena%20di%20parole.html" class="card"><h3>Catena di Parole</h3></a>
+                <a href="esercizio.html?file=Intruso%20semantico.html" class="card"><h3>Intruso Semantico</h3></a>
+                <a href="esercizio.html?file=La%20torre%20delle%20lettere.html" class="card"><h3>La Torre delle Lettere</h3></a>
+                <a href="esercizio.html?file=Riordina%20la%20frase.html" class="card"><h3>Riordina la Frase</h3></a>
+                <a href="esercizio.html?file=Riordina%20le%20lettere.html" class="card"><h3>Riordina le Lettere</h3></a>
+                <a href="esercizio.html?file=Riordina%20le%20parole%20in%20ordine%20alfabetico.html" class="card"><h3>Ordine Alfabetico Parole</h3></a>
+            </div>
+        </section>
+
+        <!-- 5. PERCEZIONE VISUOSPAZIALE -->
+        <section class="area-sezione area-visuo">
+            <div class="area-header">
+                <i class="fa-solid fa-eye"></i>
+                <h2>Gnosie e Abilità Visuospaziali</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=Esplorazione%20visuospaziale%20multilivello.html" class="card"><h3>Esplorazione Visuospaziale</h3></a>
+                <a href="esercizio.html?file=Memoria%20visuospaziale%20rotante.html" class="card"><h3>Memoria Visuospaziale Rotante</h3></a>
+                <a href="esercizio.html?file=Riconoscimento%20visivo%20base.html" class="card"><h3>Riconoscimento Visivo Base</h3></a>
+                <a href="esercizio.html?file=Riconoscimento%20visivo.html" class="card"><h3>Riconoscimento Visivo Avanzato</h3></a>
+                <a href="esercizio.html?file=Silhoutte.html" class="card"><h3>Silhouette</h3></a>
+                <a href="esercizio.html?file=Trova%20l'immagine%20corrispondente.html" class="card"><h3>Trova Immagine Corrispondente</h3></a>
+            </div>
+        </section>
+
+        <!-- 6. ORIENTAMENTO -->
+        <section class="area-sezione area-orientamento">
+            <div class="area-header">
+                <i class="fa-solid fa-compass"></i>
+                <h2>Orientamento e Cognizione Temporale</h2>
+            </div>
+            <div class="grid-esercizi">
+                <a href="esercizio.html?file=L'orologio%20invisibile.html" class="card"><h3>L'Orologio Invisibile</h3></a>
+                <a href="esercizio.html?file=Orientamento%20temporale-spaziale.html" class="card"><h3>Orientamento Temporale-Spaziale</h3></a>
+            </div>
+        </section>
+
     </div>
 
 </body>
