@@ -143,10 +143,16 @@
         </div>
     </header>
 
+    <!-- Indicatore dello stato di sincronizzazione Firebase -->
+    <div id="sync-indicator" class="bg-amber-100 text-amber-800 text-xs text-center py-1 font-bold border-b border-amber-200">
+        Sincronizzazione database in corso...
+    </div>
+
     <main id="app-container" class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full flex flex-col justify-center">
         <!-- Contenuto dinamico inserito via JS -->
     </main>
 
+    <!-- Modal Impostazioni Caregiver -->
     <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
         <div class="bg-white rounded-[2.5rem] max-w-lg w-full p-6 md:p-8 shadow-2xl border-4 border-indigo-600">
             <div class="flex justify-between items-center mb-6">
@@ -187,18 +193,100 @@
         </div>
     </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Esponiamo le funzioni Firebase globalmente in sicurezza per l'interazione degli script di gioco
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.arrayUnion = arrayUnion;
+        window.updateDoc = updateDoc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.doc = doc;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.query = query;
+
+        // Recupero parametri globali dell'Immersive
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mente-attiva';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        window.dbReady = false;
+        window.currentUser = null;
+
+        const indicator = document.getElementById('sync-indicator');
+
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                console.warn("Configurazione Firebase non trovata. Funzionamento locale abilitato.");
+                if (indicator) {
+                    indicator.textContent = "Sincronizzazione Database disattivata (Configurazione assente)";
+                    indicator.className = "bg-slate-200 text-slate-600 text-xs text-center py-1 font-bold";
+                }
+                return;
+            }
+
+            try {
+                // Inizializzazione App
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+
+                window.firebaseApp = app;
+                window.auth = auth;
+                window.db = db;
+
+                // RULE 3: Autenticazione preventiva prima delle interrogazioni
+                let userCredential;
+                if (initialAuthToken) {
+                    userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    userCredential = await signInAnonymously(auth);
+                }
+
+                window.currentUser = userCredential.user;
+                window.dbReady = true;
+
+                if (indicator) {
+                    indicator.textContent = `Sincronizzato con il database (Utente: ${window.currentUser.uid})`;
+                    indicator.className = "bg-green-100 text-green-800 text-xs text-center py-1 font-bold border-b border-green-200";
+                }
+                console.log("Firebase collegato con successo.");
+            } catch (error) {
+                console.error("Inizializzazione Firebase fallita:", error);
+                if (indicator) {
+                    indicator.textContent = "Errore di connessione con il database Cloud. Salvataggi solo in locale.";
+                    indicator.className = "bg-red-100 text-red-800 text-xs text-center py-1 font-bold border-b border-red-200";
+                }
+            }
+        }
+
+        window.addEventListener('load', () => {
+            initFirebase();
+        });
+    </script>
+
     <script>
         const state = {
             step: 'difficulty', 
             difficulty: 'base',
             showHint: true,
             showSettings: false,
-            referenceDate: new Date(), // Utilizza dinamicamente la data reale corrente del sistema
-            customCity: 'Aosta',        // Localizzazione corrente reale di default
-            customSeason: null,        // Stagione forzata da caregiver
+            referenceDate: new Date(), 
+            customCity: 'Aosta',        
+            customSeason: null,        
             answers: { weekday: null, day: null, month: null, year: null, season: null },
+            metrics: {
+                startTime: null,
+                totalAttempts: 0
+            },
             get activeSlotType() {
-                // Nel livello super-easy la sequenza comprende giorno, numero, mese e anno (senza stagione)
                 const sequence = this.difficulty === 'super-easy' 
                     ? ['weekday', 'day', 'month', 'year'] 
                     : ['weekday', 'day', 'month', 'year', 'season'];
@@ -220,28 +308,22 @@
             primavera: '🌸', estate: '☀️', autunno: '🍂', inverno: '❄️'
         };
 
-        // Calcola la stagione astronomica reale basata sulla data (solstizi ed equinozi)
         function getSeason(dateObj) {
-            const month = dateObj.getMonth() + 1; // 1-12
+            const month = dateObj.getMonth() + 1; 
             const day = dateObj.getDate();
             
-            // Primavera: 21 Marzo - 20 Giugno (12 Giugno è Primavera)
             if ((month === 3 && day >= 21) || month === 4 || month === 5 || (month === 6 && day < 21)) {
                 return 'primavera';
             }
-            // Estate: 21 Giugno - 22 Settembre
             if ((month === 6 && day >= 21) || month === 7 || month === 8 || (month === 9 && day < 23)) {
                 return 'estate';
             }
-            // Autunno: 23 Settembre - 21 Dicembre
             if ((month === 9 && day >= 23) || month === 10 || month === 11 || (month === 12 && day < 22)) {
                 return 'autunno';
             }
-            // Inverno: 22 Dicembre - 20 Marzo
             return 'inverno';
         }
 
-        // Rilevamento della posizione tramite IP Geolocation all'avvio con fallback
         async function detectLocation() {
             const headerLoc = document.getElementById('header-location');
             try {
@@ -256,7 +338,6 @@
                 }
                 throw new Error("Mancata risposta");
             } catch (e) {
-                // Impostiamo la posizione dell'utente (Aosta)
                 state.customCity = 'Aosta'; 
                 headerLoc.textContent = `📍 Posizione: AOSTA`;
             }
@@ -266,7 +347,6 @@
             const data = state.correctData;
             const isSuperEasy = state.difficulty === 'super-easy';
             
-            // Nel livello super-easy mostriamo Giorno, Numero, Mese e Anno (Senza Stagione)
             const items = [
                 { label: 'GIORNO SETT.', val: data.weekday },
                 { label: 'NUMERO', val: data.day },
@@ -295,7 +375,6 @@
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 
                 if (type === 'success') {
-                    // Accordo ascendente brillante (Do Maggiore)
                     const tones = [523.25, 659.25, 783.99]; 
                     tones.forEach((freq, i) => {
                         const osc = ctx.createOscillator();
@@ -309,7 +388,6 @@
                         osc.stop(ctx.currentTime + 0.45 + (i * 0.08));
                     });
                 } else if (type === 'error') {
-                    // Tono basso dissonante discendente
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.type = 'sawtooth';
@@ -320,7 +398,6 @@
                     osc.connect(gain); gain.connect(ctx.destination);
                     osc.start(); osc.stop(ctx.currentTime + 0.3);
                 } else if (type === 'victory') {
-                    // Trionfo allegro finale
                     const melody = [523.25, 587.33, 659.25, 783.99, 1046.50];
                     melody.forEach((freq, i) => {
                         const osc = ctx.createOscillator();
@@ -364,7 +441,6 @@
             }
             state.customSeason = seasonInput;
 
-            // Reset delle risposte per permettere la riricostruzione corretta
             state.answers = { weekday: null, day: null, month: null, year: null, season: null };
             document.getElementById('header-location').textContent = `📍 Posizione: ${state.customCity.toUpperCase()}`;
             
@@ -392,21 +468,18 @@
                     <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-slate-800 uppercase">Seleziona il livello di gioco:</h2>
                     <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-4">
                         
-                        <!-- LIVELLO SUPER FACILE -->
                         <button onclick="setDifficulty('super-easy')" class="btn-large bg-white border-pink-500 p-8 rounded-[2.5rem] shadow-lg hover:bg-pink-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">🌸</span>
                             <span class="text-2xl font-black text-pink-700 uppercase">SUPER FACILE</span>
                             <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">4 domande (Giorno, Numero, Mese, Anno). Nessun distrattore, accoppiamento dorato intuitivo.</p>
                         </button>
                         
-                        <!-- LIVELLO BASE -->
                         <button onclick="setDifficulty('base')" class="btn-large bg-white border-green-600 p-8 rounded-[2.5rem] shadow-lg hover:bg-green-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">⭐</span>
                             <span class="text-2xl font-black text-green-700 uppercase">BASE</span>
                             <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">5 domande, 3 opzioni semplificate, evidenziazione blu sequenziale della casella attiva.</p>
                         </button>
                         
-                        <!-- LIVELLO AVANZATO -->
                         <button onclick="setDifficulty('advanced')" class="btn-large bg-white border-blue-600 p-8 rounded-[2.5rem] shadow-lg hover:bg-blue-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">🏆</span>
                             <span class="text-2xl font-black text-blue-700 uppercase">SFIDA</span>
@@ -421,20 +494,19 @@
         function setDifficulty(level) {
             state.difficulty = level;
             state.step = 'temporal';
-            // Nel livello super-easy e base l'aiuto visivo è attivo per default
             state.showHint = (level === 'super-easy' || level === 'base');
+            state.metrics.startTime = Date.now();
+            state.metrics.totalAttempts = 0;
             render();
         }
 
         function renderTemporal(container) {
             const data = state.correctData;
             
-            // Impostiamo il numero di scelte in base alla difficoltà
             let count = 3;
-            if (state.difficulty === 'super-easy') count = 1; // Solo la scelta corretta (0 distrattori!)
+            if (state.difficulty === 'super-easy') count = 1; 
             if (state.difficulty === 'advanced') count = 5;
 
-            // Generiamo le opzioni di tessere disponibili
             const weekdayOptions = generateOptions(data.weekday, count, 'weekday').map(v => ({val: v, type: 'weekday'}));
             const dayOptions = generateOptions(data.day, count, 'number').map(v => ({val: v, type: 'day'}));
             const monthOptions = generateOptions(data.month, count, 'month').map(v => ({val: v, type: 'month'}));
@@ -446,10 +518,8 @@
                 : allSeasons;
             const seasonOptions = selectedSeasons.map(v => ({val: v, type: 'season'}));
 
-            // Costruiamo la lista di tessere in base ai passi abilitati
             let listToShuffle = [];
             if (state.difficulty === 'super-easy') {
-                // Nel Super Facile ora includiamo Giorno della Settimana, Numero, Mese e Anno (4 tessere totali)
                 listToShuffle = [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions];
             } else {
                 listToShuffle = [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions, ...seasonOptions];
@@ -482,26 +552,22 @@
                         ` : '<span class="text-xs bg-pink-200 text-pink-800 font-bold px-3 py-1 rounded-full uppercase">Aiuto Sempre Attivo 🌸</span>'}
                     </div>
 
-                    <!-- Box di Aiuto Visivo Coerente -->
                     <div id="hint-box" class="${state.showHint ? '' : 'hidden'} hint-date-box p-4 rounded-3xl text-center shadow-lg">
                         <span class="text-xs font-black uppercase opacity-75 block mb-1 tracking-widest">Guarda qui la data corretta di oggi:</span>
                         ${getTodayString()}
                     </div>
 
-                    <!-- Contenitori degli Slot ad alta visibilità -->
                     <div class="bg-white p-6 rounded-3xl border-4 border-slate-200 shadow-sm overflow-x-auto">
                         <div class="flex flex-nowrap md:grid ${state.difficulty === 'super-easy' ? 'md:grid-cols-4 max-w-4xl mx-auto' : 'md:grid-cols-5'} gap-3 min-w-[600px] md:min-w-0">
                             ${sequence.map(type => {
                                 const isActive = type === activeSlotType;
                                 const isCorrect = state.answers[type] !== null;
                                 
-                                // Determiniamo lo stile del bordo della casella attiva
                                 let activeClass = '';
                                 if (isActive) {
                                     activeClass = state.difficulty === 'super-easy' ? 'active-super-target' : 'active-target';
                                 }
 
-                                // Nel livello super facile inseriamo in trasparenza la filigrana con la risposta corretta
                                 let placeholderContent = '<span class="text-slate-300 font-bold uppercase text-[11px]">Seleziona</span>';
                                 if (isActive && state.difficulty === 'super-easy') {
                                     placeholderContent = `<span class="text-amber-500/40 font-black uppercase text-sm">Cerca:<br>${state.correctData[type].toUpperCase()}</span>`;
@@ -523,7 +589,6 @@
                         </div>
                     </div>
 
-                    <!-- Area Tessere di Scelta -->
                     <div class="bg-slate-200 p-6 rounded-[2.5rem] shadow-inner">
                         <p class="text-center text-slate-600 font-bold mb-4 uppercase text-sm">Tocca o trascina la tessera corretta per completare la casella luminosa:</p>
                         <div class="flex flex-wrap justify-center gap-3">
@@ -532,7 +597,6 @@
                                 const type = item.type;
                                 const isUsed = state.answers[type] === val;
                                 
-                                // Nel livello "Super Facile", applichiamo un bordo dorato pulsante alla tessera corretta attiva per un accoppiamento visivo immediato
                                 let superEasyStyleClass = '';
                                 if (state.difficulty === 'super-easy' && type === activeSlotType && val.toLowerCase() === state.correctData[type].toLowerCase()) {
                                     superEasyStyleClass = 'correct-super-tile';
@@ -563,11 +627,11 @@
         }
 
         function handleSelection(id, val, type) {
+            state.metrics.totalAttempts++;
             const dragEl = document.getElementById(`drag-${id}`);
             const activeSlot = state.activeSlotType;
             const correctValue = state.correctData[type].toLowerCase();
 
-            // Controllo della sequenzialità rigida
             if (type !== activeSlot) {
                 playSound('error');
                 if(dragEl) {
@@ -582,7 +646,6 @@
                 return;
             }
 
-            // Verifica della correttezza del valore inserito rispetto al dato di sistema o configurato
             if (val.toLowerCase() === correctValue) {
                 state.answers[type] = val;
                 playSound('success');
@@ -596,7 +659,6 @@
             }
         }
 
-        // Supporto per il Drag & Drop nativo
         function drag(ev) {
             ev.dataTransfer.setData("id", ev.target.id);
             ev.dataTransfer.setData("value", ev.target.getAttribute('data-value'));
@@ -635,7 +697,6 @@
             render();
         }
 
-        // Generatore intelligente di opzioni e distrazioni mirate
         function generateOptions(correct, count, type) {
             let options = [correct.toUpperCase()];
             const m = ['GENNAIO', 'FEBBRAIO', 'MARZO', 'APRILE', 'MAGGIO', 'GIUGNO', 'LUGLIO', 'AGOSTO', 'SETTEMBRE', 'OTTOBRE', 'NOVEMBRE', 'DICEMBRE'];
@@ -678,6 +739,7 @@
         function renderSpatialCity(container) {
             let count = 3;
             if (state.difficulty === 'super-easy') count = 1;
+            if (state.difficulty === 'advanced') count = 5;
             
             const cityOptions = generateCityOptions(state.customCity, count);
 
@@ -705,6 +767,7 @@
         }
 
         function checkCity(selected) {
+            state.metrics.totalAttempts++;
             const cleanId = `btn-city-${selected.replace(/[^a-zA-Z0-9]/g, '')}`;
             const btn = document.getElementById(cleanId);
             
@@ -738,7 +801,6 @@
                             ${isSuperEasy ? '<span class="text-xs text-amber-600 font-bold mt-2">💡 Scegli me!</span>' : ''}
                         </button>
                         
-                        <!-- I distrattori vengono totalmente rimossi nel livello Super Facile -->
                         ${!isSuperEasy ? `
                         <button onclick="checkRoom('cucina')" id="room-cucina" class="btn-large border-slate-300 bg-white p-8 rounded-3xl flex flex-col items-center shadow-lg hover:bg-indigo-50">
                             <span class="text-7xl mb-4">🍳</span>
@@ -756,6 +818,7 @@
         }
 
         function checkRoom(room) {
+            state.metrics.totalAttempts++;
             const el = document.getElementById(`room-${room}`);
             if (room === 'bagno') {
                 el.className = "btn-large bg-green-100 border-green-600 p-8 rounded-3xl flex flex-col items-center shadow-2xl scale-105 transition-all w-full";
@@ -805,6 +868,7 @@
         }
 
         function moveMap() {
+            state.metrics.totalAttempts++;
             const target = document.getElementById('target-kitchen');
             target.innerHTML = "ECCELLENTE!";
             target.className = "bg-green-600 rounded-3xl flex items-center justify-center text-white font-black text-3xl animate-pulse";
@@ -813,25 +877,202 @@
             setTimeout(() => { state.step = 'final'; render(); }, 1500);
         }
 
+        async function salvaRisultatiFirebase() {
+            // Calcolo metriche standard
+            const numeroTotaleDomande = state.difficulty === 'super-easy' ? 7 : 8; 
+            const accuratezzaPercentuale = Math.max(10, Math.min(100, Math.round((numeroTotaleDomande / state.metrics.totalAttempts) * 100)));
+            const tempoImpiegatoInSecondi = Math.round((Date.now() - state.metrics.startTime) / 1000);
+            const punteggioGrezzoGenerale = Math.max(0, numeroTotaleDomande * 10 - (state.metrics.totalAttempts - numeroTotaleDomande) * 2);
+
+            // STRUTTURA STANDARD DI SALVATAGGIO DEI DATI DELL'ESERCIZIO
+            const datiEsercizio = {
+                titolo: "Orientamento Cognitivo",
+                risultati: {
+                    risposteCorrette: numeroTotaleDomande,
+                    totaleDomande: numeroTotaleDomande,
+                    percentualeAccuratezza: accuratezzaPercentuale,
+                    tempoMedioS: tempoImpiegatoInSecondi,
+                    punteggio: punteggioGrezzoGenerale
+                }
+            };
+
+            const statusEl = document.getElementById('fb-save-status');
+            if (statusEl) {
+                statusEl.textContent = "Salvataggio nel database cloud in corso...";
+                statusEl.className = "text-sm text-amber-600 font-bold block animate-pulse";
+            }
+
+            // Estrazione parametri da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSessioneActive = urlParams.get('sessione') === 'true';
+            const urlPazienteId = urlParams.get('pazienteId') || urlParams.get('userId');
+            const sessionId = urlParams.get('sessionId');
+            const sessionType = urlParams.get('type') || 'libera'; 
+
+            // Risoluzione pazienteId con fallback
+            let patientId = urlPazienteId;
+            if (!patientId && window.currentUser) {
+                patientId = window.currentUser.uid;
+            }
+            if (!patientId) {
+                patientId = 'anon-paziente';
+            }
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'mente-attiva';
+
+            // Salvataggio locale se Firebase non è attivo
+            if (!window.dbReady || !window.db) {
+                console.warn("Database non pronto. Salvataggio locale simulato:", datiEsercizio);
+                if (statusEl) {
+                    statusEl.textContent = "Salvataggio locale completato con successo (Modalità Offline).";
+                    statusEl.className = "text-sm text-green-600 font-bold block";
+                }
+                return;
+            }
+
+            try {
+                // RULE 1: Percorso rigoroso privato /artifacts/{appId}/users/{userId}/{collectionName}/{documentId}
+                if (isSessioneActive) {
+                    if (sessionType === 'pianificata' && sessionId) {
+                        const sessionDocRef = window.doc(window.db, 'artifacts', appId, 'users', patientId, 'sessioni', sessionId);
+                        const sessionDoc = await window.getDoc(sessionDocRef);
+
+                        if (sessionDoc.exists()) {
+                            const sessionData = sessionDoc.data();
+                            let esercizi = sessionData.esercizi || [];
+                            let updated = false;
+
+                            for (let i = 0; i < esercizi.length; i++) {
+                                if (esercizi[i].titolo === "Orientamento Cognitivo" && !esercizi[i].completato) {
+                                    esercizi[i].risultati = datiEsercizio.risultati;
+                                    esercizi[i].completato = true;
+                                    updated = true;
+                                    break;
+                                }
+                            }
+
+                            if (!updated) {
+                                esercizi.push({
+                                    ...datiEsercizio,
+                                    completato: true,
+                                    dataCompletamento: new Date().toISOString()
+                                });
+                            }
+
+                            await window.updateDoc(sessionDocRef, { esercizi: esercizi });
+                            console.log("Sessione pianificata aggiornata con successo.");
+                        } else {
+                            await window.setDoc(sessionDocRef, {
+                                pazienteId: patientId,
+                                tipo: 'pianificata',
+                                dataCreazione: new Date().toISOString(),
+                                esercizi: [{
+                                    ...datiEsercizio,
+                                    completato: true,
+                                    dataCompletamento: new Date().toISOString()
+                                }]
+                            });
+                            console.log("Nuovo documento sessione pianificata generato e aggiornato.");
+                        }
+                    } else {
+                        // Sessione Libera: inserimento diretto in storico_pazienti/{pazienteId}/sessioni (mappato secondo RULE 1 in users/{patientId}/sessioni)
+                        const sessionsColRef = window.collection(window.db, 'artifacts', appId, 'users', patientId, 'sessioni');
+                        const q = window.query(sessionsColRef); 
+                        const querySnapshot = await window.getDocs(q);
+                        
+                        let latestSessionDoc = null;
+                        let latestTime = 0;
+
+                        querySnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const time = data.dataCreazione ? new Date(data.dataCreazione).getTime() : 0;
+                            if (time > latestTime && data.tipo === 'libera') {
+                                latestTime = time;
+                                latestSessionDoc = doc;
+                            }
+                        });
+
+                        if (latestSessionDoc) {
+                            const sessionDocRef = window.doc(window.db, 'artifacts', appId, 'users', patientId, 'sessioni', latestSessionDoc.id);
+                            await window.updateDoc(sessionDocRef, {
+                                eserciziSvolti: window.arrayUnion(datiEsercizio)
+                            });
+                            console.log("Esercizio aggiunto all'array eserciziSvolti della sessione libera attiva.");
+                        } else {
+                            await window.addDoc(sessionsColRef, {
+                                pazienteId: patientId,
+                                tipo: 'libera',
+                                dataCreazione: new Date().toISOString(),
+                                eserciziSvolti: [datiEsercizio]
+                            });
+                            console.log("Nuova sessione libera creata e primo esercizio popolato.");
+                        }
+                    }
+                } else {
+                    const historyColRef = window.collection(window.db, 'artifacts', appId, 'users', patientId, 'storico_esercizi');
+                    await window.addDoc(historyColRef, {
+                        ...datiEsercizio,
+                        dataCompletamento: new Date().toISOString()
+                    });
+                    console.log("Salvataggio esterno completato nello storico generale del paziente.");
+                }
+
+                if (statusEl) {
+                    statusEl.textContent = "Risultati salvati correttamente nel cloud!";
+                    statusEl.className = "text-sm text-green-600 font-bold block";
+                }
+            } catch (error) {
+                console.error("Errore durante il salvataggio dei dati su Firebase:", error);
+                if (statusEl) {
+                    statusEl.textContent = "Errore durante il salvataggio dei risultati su Firebase.";
+                    statusEl.className = "text-sm text-red-500 font-bold block";
+                }
+            }
+        }
+
+        function reindirizzaHub() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const patientId = urlParams.get('pazienteId') || urlParams.get('userId') || '';
+            const sessionId = urlParams.get('sessionId') || '';
+            window.location.href = `index.html?pazienteId=${patientId}&sessionId=${sessionId}&esercizioCompletato=OrientamentoCognitivo`;
+        }
+
         function renderFinal(container) {
             playSound('victory'); 
             container.innerHTML = `
-                <div class="text-center py-12 px-6 bg-white rounded-[4rem] shadow-2xl border-b-8 border-green-600 mt-6 max-w-2xl mx-auto">
-                    <span class="text-8xl block mb-6">🏆</span>
-                    <h2 class="text-4xl font-black text-green-700 mb-4 uppercase">Ottimo lavoro!</h2>
-                    <p class="text-2xl text-slate-700 leading-relaxed font-medium mb-10">
-                        Ti sei orientato perfettamente.<br>Hai completato tutti gli esercizi.
+                <div class="text-center py-12 px-6 bg-white rounded-[4rem] shadow-2xl border-b-8 border-green-600 mt-6 max-w-2xl mx-auto space-y-6">
+                    <span class="text-8xl block mb-2">🏆</span>
+                    <h2 class="text-4xl font-black text-green-700 uppercase">Ottimo lavoro!</h2>
+                    <p class="text-2xl text-slate-700 leading-relaxed font-medium">
+                        Ti sei orientato perfettamente.<br>Hai completato tutti gli esercizi con successo.
                     </p>
-                    <button onclick="resetApp()" class="btn-large bg-indigo-600 border-indigo-800 hover:bg-indigo-700 text-white px-16 py-6 rounded-full text-2xl font-black shadow-xl uppercase">
-                        Ricomincia
-                    </button>
+                    
+                    <!-- Area Feedback per il salvataggio dei risultati -->
+                    <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200">
+                        <span id="fb-save-status" class="text-sm text-slate-500 font-bold block">In attesa del salvataggio dei dati...</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+                        <button onclick="reindirizzaHub()" class="btn-large flex-1 bg-green-600 border-green-800 hover:bg-green-700 text-white py-5 px-6 rounded-full text-xl font-black shadow-xl uppercase">
+                            Prosegui Sessione
+                        </button>
+                        <button onclick="resetApp()" class="btn-large flex-1 bg-indigo-600 border-indigo-800 hover:bg-indigo-700 text-white py-5 px-6 rounded-full text-xl font-black shadow-xl uppercase">
+                            Ricomincia
+                        </button>
+                    </div>
                 </div>
             `;
+            // Trigger del salvataggio dati standardizzato al completamento dell'esercizio
+            salvaRisultatiFirebase();
         }
 
         function resetApp() {
             state.step = 'difficulty';
             state.answers = { weekday: null, day: null, month: null, year: null, season: null };
+            state.metrics = {
+                startTime: null,
+                totalAttempts: 0
+            };
             render();
         }
 
