@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub di Stimolazione Cognitiva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js per i Grafici di Andamento -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -80,7 +82,7 @@
             border-top: 1px solid #e2e8f0;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             #panel-content { grid-template-columns: 1fr; }
         }
 
@@ -89,6 +91,9 @@
             padding: 20px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .clinical-box h3 {
@@ -160,6 +165,71 @@
             margin-top: 10px;
             font-size: 0.9rem;
             color: #64748b;
+        }
+
+        /* --- SEZIONE DOSSIER / CLINICAL REPORT --- */
+        #patient-report-section {
+            grid-column: 1 / -1;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none; /* Si mostra solo quando si seleziona un paziente */
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .report-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-container {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-container {
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .report-table th, .report-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .report-table th {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .report-table tbody tr:hover {
+            background: #f8fafc;
         }
 
         /* --- STILI GRIGLIA E CARD --- */
@@ -290,7 +360,7 @@
                 <!-- Sezione Creazione/Anagrafica Paziente -->
                 <div class="clinical-box">
                     <h3><i class="fa-solid fa-user-plus"></i> Registra Nuovo Paziente</h3>
-                    <div class="input-group">
+                    <div class="input-group" style="margin-bottom:0;">
                         <input type="text" id="new-patient-name" placeholder="Cognome Nome (es. Rossi Mario)">
                         <button class="btn" onclick="addPatient()">Registra</button>
                     </div>
@@ -298,16 +368,16 @@
 
                 <!-- Sezione Avvio Sessione -->
                 <div class="clinical-box">
-                    <h3><i class="fa-solid fa-play"></i> Pianifica e Avvia Sessione</h3>
+                    <h3><i class="fa-solid fa-play"></i> Seleziona Paziente e Gestisci Attività</h3>
                     <div class="input-group">
-                        <select id="patient-select">
+                        <select id="patient-select" onchange="loadPatientHistory()">
                             <option value="">-- Seleziona Paziente --</option>
                         </select>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
                         <button class="btn btn-success" style="flex: 1;" onclick="startSession('pianificata')">
-                            <i class="fa-solid fa-layer-group"></i> Avvia Selezionati
+                            <i class="fa-solid fa-layer-group"></i> Avvia Pianificata
                         </button>
                         <button class="btn btn-warning" style="flex: 1;" onclick="startSession('libera')">
                             <i class="fa-solid fa-unlock-keyhole"></i> Sessione Libera
@@ -316,6 +386,39 @@
                     
                     <div id="queue-list">Nessun esercizio selezionato. Seleziona le caselle sulle card degli esercizi sotto per la sessione pianificata.</div>
                 </div>
+
+                <!-- NUOVA SEZIONE: Dossier Clinico del Paziente -->
+                <div id="patient-report-section">
+                    <h3 style="color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 8px;">
+                        <i class="fa-solid fa-chart-line"></i> Dossier Clinico di: <span id="report-patient-name">Seleziona un paziente</span>
+                    </h3>
+                    
+                    <div class="report-grid">
+                        <!-- Grafico di andamento temporale -->
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                        
+                        <!-- Lista degli esercizi svolti nello storico -->
+                        <div class="table-container">
+                            <table class="report-table" id="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data / Ora</th>
+                                        <th>Tipo Sessione</th>
+                                        <th>Esercizi Completati</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body">
+                                    <tr>
+                                        <td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px;">Nessun dato registrato per questo paziente.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -683,6 +786,7 @@
         const db = getDatabase(app);
 
         let activeSessionState = null;
+        let performanceChartInstance = null; // Memorizziamo l'istanza del grafico per distruggerla prima di ricrearla
 
         // Monitora in tempo reale se esiste una sessione attiva su Firebase
         const activeSessionRef = ref(db, 'sessione_attiva');
@@ -744,6 +848,137 @@
                 }
             }
         });
+
+        // CARICA STORICO E GRAFICO DEL PAZIENTE SELEZIONATO
+        window.loadPatientHistory = async function() {
+            const select = document.getElementById('patient-select');
+            const patientId = select.value;
+            const patientName = select.options[select.selectedIndex]?.text;
+            
+            const reportSection = document.getElementById('patient-report-section');
+            const tableBody = document.getElementById('history-table-body');
+            const nameSpan = document.getElementById('report-patient-name');
+
+            if (!patientId) {
+                reportSection.style.display = "none";
+                return;
+            }
+
+            nameSpan.textContent = patientName;
+            reportSection.style.display = "block";
+
+            // Richiesta storico da Firebase
+            const storicoRef = ref(db, `storico_pazienti/${patientId}/sessioni`);
+            const snapshot = await get(storicoRef);
+
+            if (snapshot.exists()) {
+                const sessioni = snapshot.val();
+                
+                // Ordiniamo le sessioni per data (cronologico)
+                const sessioniOrdinate = Object.keys(sessioni).map(key => ({
+                    id: key,
+                    ...sessioni[key]
+                })).sort((a, b) => new Date(a.data) - new Date(b.data));
+
+                // 1. Popolamento Tabella
+                tableBody.innerHTML = "";
+                sessioniOrdinate.forEach(sess => {
+                    const row = document.createElement('tr');
+                    
+                    const dataFormattata = new Date(sess.data).toLocaleString('it-IT', {
+                        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+
+                    const eserciziLista = sess.eserciziSvolti 
+                        ? sess.eserciziSvolti.map(e => e.titolo).join(', ') 
+                        : 'Nessun esercizio';
+
+                    row.innerHTML = `
+                        <td><strong>${dataFormattata}</strong></td>
+                        <td><span class="tag" style="background: #e0f2fe; color: #0369a1;">${sess.tipo || 'N/D'}</span></td>
+                        <td>${eserciziLista}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // 2. Elaborazione dati per il Grafico di Andamento (Numero Esercizi per data)
+                const labels = [];
+                const dataValues = [];
+
+                sessioniOrdinate.forEach(sess => {
+                    const dataGiorno = new Date(sess.data).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                    labels.push(dataGiorno);
+                    dataValues.push(sess.eserciziSvolti ? sess.eserciziSvolti.length : 0);
+                });
+
+                renderChart(labels, dataValues);
+
+            } else {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px;">
+                            Nessun dato registrato per questo paziente. Svolgi delle sessioni per vederle qui!
+                        </td>
+                    </tr>
+                `;
+                // Se non ci sono dati, resetta/distruggi il grafico per evitare grafici fantasma vecchi
+                if (performanceChartInstance) {
+                    performanceChartInstance.destroy();
+                }
+            }
+        }
+
+        // Funzione per generare il grafico con Chart.js
+        function renderChart(labels, dataValues) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Esercizi completati per sessione',
+                        data: dataValues,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: '#1d4ed8',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { family: 'Segoe UI', size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: { family: 'Segoe UI' }
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Segoe UI' } }
+                        }
+                    }
+                }
+            });
+        }
 
         // Avvia Sessione (Pianificata o Libera)
         window.startSession = function(tipo) {
