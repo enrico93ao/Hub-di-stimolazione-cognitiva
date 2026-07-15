@@ -11,10 +11,14 @@
   <!-- Font Inter da Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Lucide Icons per icone vettoriali nitide -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase App & Database SDK Compatibili -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <style>
     body {
@@ -51,7 +55,7 @@
     
     <!-- Header Fisso dell'Applicazione -->
     <div class="bg-slate-800 text-white p-4 text-center">
-      <span class="font-bold uppercase tracking-widest text-xs opacity-80">Cognitive Gym v2.3 (HTML)</span>
+      <span class="font-bold uppercase tracking-widest text-xs opacity-80">Cognitive Gym v2.4 (HTML)</span>
     </div>
 
     <!-- Area dei Contenuti ad Altezza Minima per evitare sfarfallii -->
@@ -183,6 +187,9 @@
           <!-- Generato via JS -->
         </div>
 
+        <!-- Indicatore di salvataggio dei risultati su Firebase -->
+        <div id="firebase-status" class="hidden w-full text-xs text-center py-3 px-4 rounded-xl font-semibold transition-all"></div>
+
         <button 
           id="btn-restart"
           class="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-900 shadow-lg transition-transform active:scale-95"
@@ -227,14 +234,14 @@
       distractionStep: 0,
       answers: { q1: '', q2: '', q3: '' },
       results: { q1: false, q2: false, q3: false },
-      score: 0
+      score: 0,
+      startTime: 0 // Tracciamento del tempo di inizio della prova
     };
 
     // Cambia schermata nascondendo le altre e mostrando quella selezionata
     function setStep(newStep) {
       state.step = newStep;
       
-      // Lista di tutti gli ID delle schermate
       const steps = ['intro', 'memorize', 'distract', 'quiz', 'result'];
       steps.forEach(s => {
         const el = document.getElementById(`step-${s}`);
@@ -245,7 +252,6 @@
         }
       });
 
-      // Gestione specifica degli ingressi negli step
       if (newStep === 'memorize') {
         startMemorizeTimer();
       } else {
@@ -264,7 +270,6 @@
         renderResultsScreen();
       }
 
-      // Re-inizializza le icone Lucide aggiunte dinamicamente
       lucide.createIcons();
     }
 
@@ -301,6 +306,11 @@
       state.answers = { q1: '', q2: '', q3: '' };
       state.results = { q1: false, q2: false, q3: false };
       state.score = 0;
+      state.startTime = Date.now(); // Memorizza il timestamp di avvio per calcolare la durata
+
+      // Nascondi indicatore di salvataggio
+      const statusEl = document.getElementById('firebase-status');
+      if (statusEl) statusEl.classList.add('hidden');
 
       // Pulisce gli input precedenti
       document.getElementById('math-input').value = '';
@@ -369,7 +379,7 @@
       document.getElementById('label-q3').textContent = `3. Quale monumento visiterai a ${state.sessionData[0].city}?`;
     }
 
-    // Controllo delle risposte dell'utente
+    // Controllo delle risposte dell'utente e avvio salvataggio
     function checkAnswers() {
       state.answers.q1 = document.getElementById('ans-q1').value;
       state.answers.q2 = document.getElementById('ans-q2').value;
@@ -402,12 +412,167 @@
 
       state.results = newResults;
       state.score = currentScore;
+
+      // Calcola tempo impiegato in secondi
+      const tempoImpiegatoInSecondi = Math.round((Date.now() - state.startTime) / 1000);
+
+      // Esegui il salvataggio su Firebase se applicabile
+      salvaRisultatiFirebase(currentScore, 3, tempoImpiegatoInSecondi);
+
       setStep('result');
+    }
+
+    // Inizializza la configurazione di Firebase salvata precedentemente in localStorage
+    function initFirebase() {
+      const localConfig = localStorage.getItem('firebaseConfig');
+      if (localConfig) {
+        try {
+          const config = JSON.parse(localConfig);
+          if (!firebase.apps.length) {
+            firebase.initializeApp(config);
+          }
+          return true;
+        } catch (e) {
+          console.error("Errore di inizializzazione Firebase:", e);
+        }
+      }
+      return false;
+    }
+
+    // Mostra lo stato di sincronizzazione all'utente
+    function showFirebaseStatus(success, message = "") {
+      const statusEl = document.getElementById('firebase-status');
+      if (!statusEl) return;
+      
+      statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-blue-100', 'text-blue-700');
+      
+      if (success === 'loading') {
+        statusEl.classList.add('bg-blue-100', 'text-blue-700');
+        statusEl.textContent = message || "Sincronizzazione dei risultati con la cartella clinica...";
+        statusEl.classList.remove('hidden');
+      } else if (success) {
+        statusEl.classList.add('bg-green-100', 'text-green-700');
+        statusEl.textContent = message || "Sincronizzazione avvenuta con successo!";
+        statusEl.classList.remove('hidden');
+      } else {
+        statusEl.classList.add('bg-red-100', 'text-red-700');
+        statusEl.textContent = message || "Connessione non riuscita. Salvataggio locale completato.";
+        statusEl.classList.remove('hidden');
+      }
+    }
+
+    // Funzione principale di salvataggio unificato dei dati della sessione
+    function salvaRisultatiFirebase(risposteCorrette, totaleDomande, tempoImpiegatoInSecondi) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSessione = urlParams.get('sessione') === 'true';
+      if (!isSessione) return; // Salva solo se si trova all'interno di una sessione attiva
+
+      const pazienteId = urlParams.get('pazienteId');
+      const sessioneId = urlParams.get('sessioneId');
+      const indiceEsercizio = urlParams.get('indiceEsercizio') || '0';
+      const tipoSessione = urlParams.get('tipoSessione') || 'libera'; // 'pianificata' o 'libera'
+      const titoloEsercizio = urlParams.get('titolo') || "Esercizio Memoria Dinamico";
+
+      const calcoloAccuratezzaPercentuale = Math.round((risposteCorrette / totaleDomande) * 100);
+
+      // STRUTTURA STANDARD DI SALVATAGGIO DEI DATI DELL'ESERCIZIO
+      const datiEsercizio = {
+        titolo: titoloEsercizio,
+        risultati: {
+          risposteCorrette: risposteCorrette,
+          totaleDomande: totaleDomande,
+          percentualeAccuratezza: calcoloAccuratezzaPercentuale,
+          tempoMedioS: tempoImpiegatoInSecondi,
+          punteggio: risposteCorrette
+        }
+      };
+
+      if (!initFirebase()) {
+        showFirebaseStatus(false, "Configurazione database mancante. Dati non salvati.");
+        return;
+      }
+
+      showFirebaseStatus('loading');
+      const db = firebase.database();
+
+      if (tipoSessione === 'pianificata') {
+        // Se la sessione è Pianificata, deve salvare datiEsercizio dentro l'array/nodo dei risultati dell'indice corrente della sessione
+        const path = `storico_pazienti/${pazienteId}/sessioni/${sessioneId}/esercizi/${indiceEsercizio}/risultati`;
+        db.ref(path).set(datiEsercizio.risultati)
+          .then(() => {
+            console.log("Risultati pianificati registrati in:", path);
+            showFirebaseStatus(true, "Risultati della sessione pianificata salvati!");
+          })
+          .catch(err => {
+            console.error("Errore salvataggio sessione pianificata:", err);
+            showFirebaseStatus(false, "Errore di connessione al database.");
+          });
+      } else {
+        // Se la sessione è Libera, deve aggiungere direttamente datiEsercizio all'array eserciziSvolti dell'ultimo blocco di sessione
+        const path = `storico_pazienti/${pazienteId}/sessioni`;
+        db.ref(path).orderByKey().limitToLast(1).once('value')
+          .then(snapshot => {
+            if (snapshot.exists()) {
+              const lastSessionKey = Object.keys(snapshot.val())[0];
+              const exercisesRef = db.ref(`storico_pazienti/${pazienteId}/sessioni/${lastSessionKey}/eserciziSvolti`);
+              
+              exercisesRef.once('value').then(exSnapshot => {
+                let exercisesList = [];
+                if (exSnapshot.exists()) {
+                  if (Array.isArray(exSnapshot.val())) {
+                    exercisesList = exSnapshot.val();
+                  } else {
+                    exercisesList = Object.values(exSnapshot.val());
+                  }
+                }
+                exercisesList.push(datiEsercizio);
+                exercisesRef.set(exercisesList)
+                  .then(() => {
+                    console.log("Esercizio aggiunto a eserciziSvolti nella sessione:", lastSessionKey);
+                    showFirebaseStatus(true, "Esercizio aggiunto alla sessione corrente con successo!");
+                  })
+                  .catch(err => {
+                    console.error("Errore scrittura eserciziSvolti:", err);
+                    showFirebaseStatus(false, "Impossibile aggiungere l'esercizio alla sessione.");
+                  });
+              });
+            } else {
+              showFirebaseStatus(false, "Nessun blocco di sessione attiva per l'utente.");
+            }
+          })
+          .catch(err => {
+            console.error("Errore lettura sessioni:", err);
+            showFirebaseStatus(false, "Errore di connessione alle sessioni del paziente.");
+          });
+      }
+    }
+
+    // Gestione del reindirizzamento al termine della sessione o ritorno
+    function gestisciChiusuraORedirect() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSessione = urlParams.get('sessione') === 'true';
+      
+      if (isSessione) {
+        const redirectUrl = urlParams.get('redirectUrl') || 'index.html';
+        const pazienteId = urlParams.get('pazienteId') || '';
+        const sessioneId = urlParams.get('sessioneId') || '';
+        
+        let target = redirectUrl;
+        if (!target.includes('pazienteId=') && pazienteId) {
+          target += (target.includes('?') ? '&' : '?') + 'pazienteId=' + pazienteId;
+        }
+        if (!target.includes('sessioneCorrente=') && sessioneId) {
+          target += '&sessioneCorrente=' + sessioneId;
+        }
+        
+        window.location.href = target;
+      } else {
+        initializeExercise();
+      }
     }
 
     // Rendering della schermata dei risultati storici
     function renderResultsScreen() {
-      // Badge punteggio
       const scoreBadge = document.getElementById('result-score-badge');
       const scoreText = document.getElementById('result-score-text');
       const headerText = document.getElementById('result-header');
@@ -422,7 +587,17 @@
         headerText.textContent = "Riepilogo Risposte";
       }
 
-      // Generazione dei singoli widget di dettaglio risposta
+      // Adatta testo e azione del pulsante se siamo all'interno di una sessione attiva
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSessione = urlParams.get('sessione') === 'true';
+      const btnRestart = document.getElementById('btn-restart');
+      
+      if (isSessione) {
+        btnRestart.innerHTML = `<i data-lucide="arrow-right" class="w-5 h-5"></i> Continua Sessione`;
+      } else {
+        btnRestart.innerHTML = `<i data-lucide="rotate-ccw" class="w-5 h-5"></i> Nuova Sessione`;
+      }
+
       const resultsList = document.getElementById('results-list');
       resultsList.innerHTML = '';
 
@@ -485,7 +660,6 @@
         mathInput.classList.add('shake-animation');
         mathInput.focus();
         
-        // Rimuove la classe shake dopo l'animazione per poterla riattivare
         setTimeout(() => {
           mathInput.classList.remove('shake-animation');
         }, 200);
@@ -496,11 +670,15 @@
     document.getElementById('btn-start').addEventListener('click', initializeExercise);
     document.getElementById('btn-ready').addEventListener('click', () => setStep('distract'));
     document.getElementById('btn-submit-quiz').addEventListener('click', checkAnswers);
-    document.getElementById('btn-restart').addEventListener('click', initializeExercise);
+    document.getElementById('btn-restart').addEventListener('click', gestisciChiusuraORedirect);
 
-    // Al caricamento, inizializza le icone della prima pagina
+    // Al caricamento, inizializza le icone della prima pagina e prepara Firebase se in sessione
     window.onload = function() {
       lucide.createIcons();
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('sessione') === 'true') {
+        initFirebase();
+      }
     };
   </script>
 </body>
