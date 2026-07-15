@@ -6,104 +6,208 @@
     <title>Esercizio - Hub Cognitivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            display: flex;
-            flex-direction: column;
-            background-color: #fff;
-        }
-
-        /* Barra superiore di navigazione */
-        #top-bar {
-            height: 60px;
-            background-color: #1e293b;
-            color: white;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 100;
-        }
-
-        .btn-back {
-            background-color: #334155;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s;
-        }
-
-        .btn-back:hover {
-            background-color: #475569;
-        }
-
-        #exercise-title {
-            margin-left: 20px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #cbd5e1;
-        }
-
-        /* Frame dell'esercizio */
-        #exercise-iframe {
-            flex-grow: 1;
-            width: 100%;
-            height: calc(100% - 60px);
-            border: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; background-color: #fff; }
+        #top-bar { height: 60px; background-color: #1e293b; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 100; }
+        .btn-action { background-color: #334155; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
+        .btn-action:hover { background-color: #475569; }
+        .btn-next { background-color: #10b981; }
+        .btn-next:hover { background-color: #059669; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        #exercise-title { font-size: 1.1rem; font-weight: 500; color: #cbd5e1; }
+        #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 60px); border: none; }
+        
+        /* Modal Risultati di Fine Sessione */
+        #results-screen { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; z-index: 999; color: white; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .results-box { background: #1e293b; padding: 40px; border-radius: 24px; max-width: 600px; width: 100%; border: 1px solid #334155; text-align: center; }
+        .results-box h2 { font-size: 2rem; color: #3b82f6; margin-bottom: 20px; }
+        .results-list { list-style: none; margin: 25px 0; text-align: left; }
+        .results-list li { padding: 12px 0; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <a href="index.html" class="btn-back">
-            <i class="fa-solid fa-arrow-left"></i> Torna alla Home
-        </a>
-        <div id="exercise-title">Caricamento attività...</div>
+        <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
+            <i class="fa-solid fa-arrow-left"></i> Termina Sessione
+        </button>
+        <div id="exercise-title">Caricamento in corso...</div>
+        <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
+            Avanti (Prossimo Esercizio) <i class="fa-solid fa-arrow-right"></i>
+        </button>
     </div>
 
     <iframe id="exercise-iframe" src=""></iframe>
 
-    <script>
-        // Funzione per leggere i parametri nell'URL (es. ?file=catena_vincente.html)
-        function getConfigFileFromUrl() {
+    <!-- Schermata di Fine Sessione -->
+    <div id="results-screen">
+        <div class="results-box">
+            <h2><i class="fa-solid fa-square-poll-vertical"></i> Sessione Conclusa!</h2>
+            <p id="paziente-concluso" style="font-size: 1.2rem; color: #94a3b8;"></p>
+            <ul class="results-list" id="final-stats">
+                <!-- Esercizi completati -->
+            </ul>
+            <button class="btn-action btn-next" style="font-size: 1.1rem; padding: 12px 30px;" onclick="window.location.href='index.html'">
+                Torna all'Hub Centrale
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, get, set, update, push } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBBChH3sFfhwE4waQTzERtKGytJrucYEFM",
+            authDomain: "hub-di-stimolazione-cognitiva.firebaseapp.com",
+            databaseURL: "https://hub-di-stimolazione-cognitiva-default-rtdb.firebaseio.com",
+            projectId: "hub-di-stimolazione-cognitiva",
+            storageBucket: "hub-di-stimolazione-cognitiva.firebasestorage.app",
+            messagingSenderId: "593673504352",
+            appId: "1:593673504352:web:9d4a194109ec7061e6e505",
+            measurementId: "G-6JTPBYQYPE"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let activeSession = null;
+        let isSessionPianificata = false;
+
+        window.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
-            return params.get('file');
-        }
+            const isSessionParam = params.get('sessione');
+            const fileDirect = params.get('file');
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const fileName = getConfigFileFromUrl();
-            const iframe = document.getElementById('exercise-iframe');
-            const titleDisplay = document.getElementById('exercise-title');
+            // Controlliamo prima se c'è una sessione attiva salvata su Firebase
+            const sessionRef = ref(db, 'sessione_attiva');
+            const snapshot = await get(sessionRef);
 
-            if (fileName) {
-                // Carica il file dell'esercizio nell'iframe
-                iframe.src = fileName;
+            if (snapshot.exists()) {
+                activeSession = snapshot.val();
                 
-                // Rende il nome del file più leggibile per mostrarlo temporaneamente come titolo
-                const readableName = fileName.replace('.html', '').replace(/_/g, ' ');
-                titleDisplay.textContent = readableName.charAt(0).toUpperCase() + readableName.slice(1);
+                if (activeSession.tipo === 'libera') {
+                    // MODALITÀ LIBERA: L'esercizio specifico è caricato tramite parametro nell'URL
+                    if (fileDirect) {
+                        const esFile = decodeURIComponent(fileDirect);
+                        document.getElementById('exercise-iframe').src = esFile;
+                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero: ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
+                        document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-check"></i> Salva e Torna';
+                    } else {
+                        // Se sono in modalità libera ma sono finito qui senza file specifico, torno indietro
+                        window.location.href = "index.html";
+                    }
+                } else {
+                    // MODALITÀ PIANIFICATA: Segue la sequenza preimpostata
+                    isSessionPianificata = true;
+                    loadCurrentExerciseFromSession();
+                }
             } else {
-                titleDisplay.textContent = "Errore: Nessun esercizio selezionato.";
-                alert("Nessun esercizio specificato nell'URL.");
+                // NESSUN PAZIENTE SELEZIONATO: Funzionamento classico senza salvataggio dati
+                if (fileDirect) {
+                    const esFile = decodeURIComponent(fileDirect);
+                    document.getElementById('exercise-iframe').src = esFile;
+                    document.getElementById('exercise-title').textContent = esFile.replace('.html', '').replace(/_/g, ' ');
+                    document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-arrow-left"></i> Torna alla Home (Nessun paziente)';
+                } else {
+                    alert("Seleziona un esercizio o avvia una sessione per continuare.");
+                    window.location.href = "index.html";
+                }
             }
         });
+
+        function loadCurrentExerciseFromSession() {
+            const index = activeSession.indiceCorrente;
+            const esercizi = activeSession.esercizi;
+
+            if (esercizi && index < esercizi.length) {
+                const esercizioAttivo = esercizi[index];
+                document.getElementById('exercise-iframe').src = esercizioAttivo.file;
+                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
+                document.getElementById('next-btn').style.display = "inline-flex";
+            } else {
+                showFinalResults();
+            }
+        }
+
+        window.nextStep = async function() {
+            if (!activeSession) return;
+
+            const index = activeSession.indiceCorrente;
+            const sessionRef = ref(db, 'sessione_attiva');
+            const nuovoIndice = index + 1;
+            
+            await update(sessionRef, {
+                indiceCorrente: nuovoIndice
+            });
+
+            activeSession.indiceCorrente = nuovoIndice;
+            loadCurrentExerciseFromSession();
+        }
+
+        window.exitSession = async function() {
+            if (activeSession) {
+                if (activeSession.tipo === 'libera') {
+                    // Salva la singola attività nello storico prima di tornare alla home
+                    const params = new URLSearchParams(window.location.search);
+                    const fileDirect = params.get('file');
+                    const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
+
+                    const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
+                    await push(storicoRef, {
+                        data: new Date().toISOString(),
+                        tipo: "Esercizio Libero",
+                        eserciziSvolti: [{ titolo: esTitle, file: fileDirect || "" }]
+                    });
+                } else if (isSessionPianificata) {
+                    // Se abbandona la sessione pianificata a metà, salviamo quello che ha fatto finora
+                    const completati = activeSession.esercizi.slice(0, activeSession.indiceCorrente);
+                    if (completati.length > 0) {
+                        const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
+                        await push(storicoRef, {
+                            data: new Date().toISOString(),
+                            tipo: "Sessione Pianificata Interrotta",
+                            eserciziSvolti: completati
+                        });
+                    }
+                    // Resetta la sessione attiva
+                    await set(ref(db, 'sessione_attiva'), null);
+                }
+            }
+            window.location.href = "index.html";
+        }
+
+        function showFinalResults() {
+            document.getElementById('exercise-iframe').style.display = "none";
+            document.getElementById('top-bar').style.display = "none";
+            
+            const resultsScreen = document.getElementById('results-screen');
+            resultsScreen.style.display = "flex";
+            
+            document.getElementById('paziente-concluso').textContent = `Paziente: ${activeSession.pazienteNome}`;
+            
+            const list = document.getElementById('final-stats');
+            list.innerHTML = "";
+            
+            activeSession.esercizi.forEach((es, i) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
+                list.appendChild(li);
+            });
+
+            // Salva lo storico completo nel database
+            const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
+            push(storicoRef, {
+                data: new Date().toISOString(),
+                tipo: "Sessione Pianificata Completa",
+                eserciziSvolti: activeSession.esercizi
+            }).then(async () => {
+                // Elimina la sessione attiva
+                await set(ref(db, 'sessione_attiva'), null);
+            });
+        }
     </script>
 </body>
 </html>
