@@ -108,7 +108,15 @@
         <div class="step-indicator inactive-step" id="dot-4">4</div>
     </div>
 
-    <div id="app" class="max-w-3xl w-full glass-card rounded-[2rem] shadow-2xl overflow-hidden min-h-[650px] flex flex-col border border-white">
+    <div id="app" class="max-w-3xl w-full glass-card rounded-[2rem] shadow-2xl overflow-hidden min-h-[650px] flex flex-col border border-white relative">
+        
+        <!-- Overlay di Salvataggio -->
+        <div id="saving-overlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white space-y-4 rounded-[2rem]">
+            <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-xl font-bold tracking-wide">Salvataggio dei risultati in corso...</p>
+            <p class="text-sm text-slate-300">Si prega di non chiudere la pagina.</p>
+        </div>
+
         <!-- Header -->
         <div class="bg-white px-8 py-6 border-b flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -176,6 +184,7 @@
                 </div>
             </div>
 
+            <!-- Supporto Metacognitivo -->
             <div id="step-correction-reading" class="hidden space-y-8 fade-in">
                 <div class="space-y-2">
                     <span class="text-amber-600 font-bold uppercase text-xs tracking-widest">Supporto Metacognitivo</span>
@@ -208,6 +217,7 @@
                 </div>
             </div>
 
+            <!-- Schermata Statistiche -->
             <div id="stats-screen" class="hidden space-y-8 fade-in text-center">
                 <div class="inline-block p-4 bg-indigo-50 rounded-full mb-2">
                     <span class="text-5xl">📊</span>
@@ -237,10 +247,163 @@
                     <p class="text-indigo-100 text-sm" id="global-eval">-</p>
                 </div>
 
-                <button onclick="location.reload()" class="bg-slate-800 text-white px-10 py-4 rounded-2xl font-bold hover:bg-slate-900 transition shadow-xl w-full">Nuova Sessione</button>
+                <div class="flex flex-col gap-3 pt-4">
+                    <button id="btn-save-database" onclick="salvaSuFirebase()" class="btn-gradient text-white py-4 rounded-2xl font-bold text-lg shadow-xl w-full">Salva Sessione e Continua</button>
+                    <button onclick="location.reload()" class="bg-slate-200 text-slate-700 px-10 py-4 rounded-2xl font-bold hover:bg-slate-300 transition w-full">Nuova Sessione Locale</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variabili Globali per l'Integrazione
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'neuroboost-v2';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        // Recupero parametri URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const haSessioneAttiva = urlParams.get('sessione') === 'true';
+        const pazienteIdParam = urlParams.get('pazienteId');
+        const sessionIdParam = urlParams.get('sessionId') || urlParams.get('sessioneId');
+        const tipoSessione = urlParams.get('tipoSessione') || urlParams.get('tipo') || 'libera';
+        const indiceEsercizio = parseInt(urlParams.get('indiceEsercizio') || urlParams.get('index') || '0', 10);
+        const nextUrl = urlParams.get('nextUrl') || 'index.html';
+
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined') {
+                console.warn("Configurazione Firebase non rilevata. Modalità offline attivata.");
+                return;
+            }
+            try {
+                const config = JSON.parse(__firebase_config);
+                const app = initializeApp(config);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Autenticazione con Token prioritario o in anonimo
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const credentials = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = credentials.user;
+                } else {
+                    const credentials = await signInAnonymously(auth);
+                    currentUser = credentials.user;
+                }
+                console.log("Autenticazione Firebase riuscita. UID:", currentUser.uid);
+            } catch (err) {
+                console.error("Errore durante l'inizializzazione di Firebase:", err);
+            }
+        }
+
+        window.salvaSuFirebase = async function() {
+            const overlay = document.getElementById('saving-overlay');
+            overlay.classList.remove('hidden');
+
+            const avgTime = window.stats.intrusoTimes.length > 0 
+                ? parseFloat((window.stats.intrusoTimes.reduce((a,b) => a+b, 0) / window.stats.intrusoTimes.length).toFixed(1)) 
+                : 0;
+            const accuracy = Math.round((window.stats.finalCorrectAnswers / window.stats.totalQuestions) * 100);
+            const totalDuration = Math.round((Date.now() - window.stats.startTime) / 1000);
+            
+            // Formula del punteggio grezzo di gioco
+            const baseScore = Math.round((window.stats.finalCorrectAnswers / window.stats.totalQuestions) * 100);
+            const rawScore = Math.max(0, baseScore - Math.round(window.stats.timesReread * 10));
+
+            // STRUTTURA STANDARD DI SALVATAGGIO DEI DATI DELL'ESERCIZIO
+            const datiEsercizio = {
+                titolo: "Training Cognitivo", // Corrisponde al data-title nel file index.html
+                risultati: {
+                    risposteCorrette: window.stats.finalCorrectAnswers,
+                    totaleDomande: window.stats.totalQuestions,
+                    percentualeAccuratezza: accuracy,
+                    tempoMedioS: totalDuration,
+                    punteggio: rawScore
+                }
+            };
+
+            console.log("Tentativo di salvataggio dati standardizzati:", datiEsercizio);
+
+            if (!db || !currentUser) {
+                console.warn("Firebase non connesso. I dati verranno salvati solo localmente.");
+                alert("Attenzione: Configurazione cloud mancante. Dati salvati localmente.");
+                overlay.classList.add('hidden');
+                window.location.href = nextUrl;
+                return;
+            }
+
+            const targetPazienteId = pazienteIdParam || currentUser.uid;
+
+            try {
+                if (tipoSessione === 'pianificata' && sessionIdParam) {
+                    // SESSIONE PIANIFICATA: Aggiornamento all'indice corrente
+                    const sessionDocRef = doc(db, 'artifacts', appId, 'users', targetPazienteId, 'sessioni', sessionIdParam);
+                    const docSnap = await getDoc(sessionDocRef);
+
+                    if (docSnap.exists()) {
+                        const sData = docSnap.data();
+                        let esercizi = sData.esercizi || [];
+                        let risultati = sData.risultati || [];
+
+                        if (esercizi[indiceEsercizio]) {
+                            esercizi[indiceEsercizio].risultato = datiEsercizio;
+                            esercizi[indiceEsercizio].completato = true;
+                        } else {
+                            esercizi[indiceEsercizio] = { risultato: datiEsercizio, completato: true };
+                        }
+                        risultati[indiceEsercizio] = datiEsercizio;
+
+                        await updateDoc(sessionDocRef, {
+                            esercizi: esercizi,
+                            risultati: risultati,
+                            stato: (indiceEsercizio + 1 >= esercizi.length) ? 'completata' : 'in_corso',
+                            dataFine: new Date().toISOString()
+                        });
+                    }
+                } else {
+                    // SESSIONE LIBERA: Aggiunta all'ultimo blocco di sessione dentro storico_pazienti
+                    const storicoDocRef = doc(db, 'artifacts', appId, 'users', targetPazienteId, 'storico_pazienti', 'sessioni');
+                    const docSnap = await getDoc(storicoDocRef);
+                    let sessioni = [];
+
+                    if (docSnap.exists()) {
+                        sessioni = docSnap.data().sessioni || [];
+                    }
+
+                    if (sessioni.length === 0) {
+                        sessioni.push({
+                            id: sessionIdParam || "sessione_libera_" + Date.now(),
+                            dataStart: new Date(window.stats.startTime).toISOString(),
+                            eserciziSvolti: []
+                        });
+                    }
+
+                    let lastSession = sessioni[sessioni.length - 1];
+                    if (!lastSession.eserciziSvolti) lastSession.eserciziSvolti = [];
+                    
+                    lastSession.eserciziSvolti.push(datiEsercizio);
+                    lastSession.dataEnd = new Date().toISOString();
+
+                    await setDoc(storicoDocRef, { sessioni: sessioni }, { merge: true });
+                }
+
+                console.log("Salvataggio Firebase completato con successo!");
+                overlay.classList.add('hidden');
+                window.location.href = nextUrl;
+            } catch (err) {
+                console.error("Errore durante il salvataggio dei progressi su Firestore:", err);
+                alert("Errore di rete durante il salvataggio dei risultati.");
+                overlay.classList.add('hidden');
+            }
+        };
+
+        // Avvio Firebase al caricamento
+        window.addEventListener('DOMContentLoaded', initFirebase);
+    </script>
 
     <script>
         const stories = [
@@ -304,7 +467,7 @@
             }
         ];
 
-        let stats = {
+        window.stats = {
             intrusoTimes: [],
             initialCorrectAnswers: null,
             finalCorrectAnswers: null,
@@ -315,10 +478,10 @@
         };
 
         let selectedStory, timerInterval, currentIntrusoLevel = 0, activeIntrusoSet = [], levelStartTime;
-        let isCorrectList = []; // Tiene traccia di quali domande sono giuste
+        let isCorrectList = [];
 
         function setupAndStart() {
-            stats.startTime = Date.now();
+            window.stats.startTime = Date.now();
             selectedStory = stories[Math.floor(Math.random() * stories.length)];
             activeIntrusoSet = [...intruderPairs].sort(() => Math.random() - 0.5).slice(0, 4);
             const selectedDrawing = drawingVariants[Math.floor(Math.random() * drawingVariants.length)];
@@ -330,9 +493,9 @@
             
             const quizContainer = document.getElementById('quiz-container');
             quizContainer.innerHTML = '';
-            stats.totalQuestions = selectedStory.questions.length;
+            window.stats.totalQuestions = selectedStory.questions.length;
             
-            isCorrectList = Array(stats.totalQuestions).fill(false);
+            isCorrectList = Array(window.stats.totalQuestions).fill(false);
 
             selectedStory.questions.forEach((qObj, i) => {
                 const div = document.createElement('div');
@@ -406,7 +569,7 @@
                 d.onclick = () => { 
                     if(s === set.i) { 
                         const timeTaken = (Date.now() - levelStartTime) / 1000;
-                        stats.intrusoTimes.push(timeTaken);
+                        window.stats.intrusoTimes.push(timeTaken);
                         d.style.background = "#22c55e";
                         d.style.color = "white";
                         setTimeout(() => {
@@ -429,11 +592,10 @@
             let currentCorrect = 0;
             
             selectedStory.questions.forEach((qObj, i) => {
-                // Controlla solo se non era già stata segnata corretta in precedenza
                 const userAns = document.getElementById(`ans-${i}`).value.toLowerCase().trim();
                 const isCorrect = qObj.keys.some(k => userAns.includes(k.toLowerCase()));
                 
-                isCorrectList[i] = isCorrectList[i] || isCorrect; // Se era già corretta, resta corretta
+                isCorrectList[i] = isCorrectList[i] || isCorrect;
                 
                 if (isCorrectList[i]) {
                     currentCorrect++;
@@ -446,18 +608,15 @@
                 feedbackList.appendChild(p);
             });
 
-            // Salviamo i dati per le statistiche finali
-            if (!stats.correctionsAttempted) {
-                // Primo tentativo di rievocazione in assoluto
-                stats.initialCorrectAnswers = currentCorrect;
+            if (!window.stats.correctionsAttempted) {
+                window.stats.initialCorrectAnswers = currentCorrect;
             }
-            stats.finalCorrectAnswers = currentCorrect;
+            window.stats.finalCorrectAnswers = currentCorrect;
 
             document.getElementById('submit-quiz-btn').classList.add('hidden');
             document.getElementById('feedback-area').classList.remove('hidden');
 
-            // Se ci sono errori, mostra l'opzione di tornare a leggere
-            if (currentCorrect < stats.totalQuestions) {
+            if (currentCorrect < window.stats.totalQuestions) {
                 document.getElementById('btn-re-read').classList.remove('hidden');
             } else {
                 document.getElementById('btn-re-read').classList.add('hidden');
@@ -465,10 +624,8 @@
         }
 
         function startCorrectionReading() {
-            stats.timesReread++;
-            stats.correctionsAttempted = true;
-            
-            // Nascondiamo il quiz e mostriamo la schermata di supporto rilettura
+            window.stats.timesReread++;
+            window.stats.correctionsAttempted = true;
             document.getElementById('step-4').classList.add('hidden');
             document.getElementById('step-correction-reading').classList.remove('hidden');
         }
@@ -480,7 +637,6 @@
             document.getElementById('correction-badge').classList.remove('hidden');
             document.getElementById('quiz-title').innerText = "Correggi le Risposte Errate";
 
-            // Imposta gli input: blocca quelli corretti, evidenzia quelli da correggere
             selectedStory.questions.forEach((qObj, i) => {
                 const inputElement = document.getElementById(`ans-${i}`);
                 if (isCorrectList[i]) {
@@ -489,11 +645,9 @@
                 } else {
                     inputElement.disabled = false;
                     inputElement.className = "w-full bg-white border-2 border-red-300 p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 transition";
-                    // Non cancelliamo l'input precedente in modo che il paziente possa riflettere sull'errore
                 }
             });
 
-            // Ripristina lo stato del pulsante di invio
             document.getElementById('submit-quiz-btn').innerText = "Verifica Correzioni";
             document.getElementById('submit-quiz-btn').classList.remove('hidden');
             document.getElementById('feedback-area').classList.add('hidden');
@@ -504,36 +658,32 @@
             document.getElementById('stats-screen').classList.remove('hidden');
             document.getElementById('progress-bar').style.display = 'none';
 
-            // 1. Calcolo Attenzione
-            const avgTime = stats.intrusoTimes.length > 0 
-                ? (stats.intrusoTimes.reduce((a,b) => a+b, 0) / stats.intrusoTimes.length).toFixed(1) 
+            const avgTime = window.stats.intrusoTimes.length > 0 
+                ? (window.stats.intrusoTimes.reduce((a,b) => a+b, 0) / window.stats.intrusoTimes.length).toFixed(1) 
                 : 0;
             document.getElementById('stat-attention').innerText = `${avgTime}s`;
 
-            // 2. Calcolo Memoria Iniziale
-            const initialMemoryPerc = Math.round((stats.initialCorrectAnswers / stats.totalQuestions) * 100);
-            document.getElementById('stat-initial-memory').innerText = `${initialMemoryPerc}% (${stats.initialCorrectAnswers}/${stats.totalQuestions})`;
+            const initialMemoryPerc = Math.round((window.stats.initialCorrectAnswers / window.stats.totalQuestions) * 100);
+            document.getElementById('stat-initial-memory').innerText = `${initialMemoryPerc}% (${window.stats.initialCorrectAnswers}/${window.stats.totalQuestions})`;
 
-            // 3. Calcolo Memoria Finale con eventuale correzione
-            const finalMemoryPerc = Math.round((stats.finalCorrectAnswers / stats.totalQuestions) * 100);
+            const finalMemoryPerc = Math.round((window.stats.finalCorrectAnswers / window.stats.totalQuestions) * 100);
             const cardFinalMemory = document.getElementById('card-final-memory');
             const statFinalMemory = document.getElementById('stat-final-memory');
             const statRereadInfo = document.getElementById('stat-reread-info');
 
-            if (stats.correctionsAttempted) {
+            if (window.stats.correctionsAttempted) {
                 cardFinalMemory.classList.remove('hidden');
-                statFinalMemory.innerText = `${finalMemoryPerc}% (${stats.finalCorrectAnswers}/${stats.totalQuestions})`;
-                statRereadInfo.innerText = `Riletture effettuate: ${stats.timesReread}`;
+                statFinalMemory.innerText = `${finalMemoryPerc}% (${window.stats.finalCorrectAnswers}/${window.stats.totalQuestions})`;
+                statRereadInfo.innerText = `Riletture effettuate: ${window.stats.timesReread}`;
             } else {
                 statFinalMemory.innerText = "Non Necessaria";
                 statRereadInfo.innerText = "Tutto corretto al primo colpo!";
             }
 
-            // 4. Valutazione Clinica Globale
             let evaluation = "";
             if (initialMemoryPerc === 100) {
                 evaluation = "Prestazione eccezionale! Memoria a lungo termine intatta e assenza di fallimenti di codifica. Massima focalizzazione.";
-            } else if (finalMemoryPerc === 100 && stats.correctionsAttempted) {
+            } else if (finalMemoryPerc === 100 && window.stats.correctionsAttempted) {
                 evaluation = "Ottima flessibilità cognitiva e capacità di monitoraggio. Il paziente ha sfruttato la rilettura per auto-correggersi efficacemente.";
             } else if (finalMemoryPerc > initialMemoryPerc) {
                 evaluation = "Il paziente dimostra capacità di apprendimento e miglioramento dopo feedback, anche se alcune informazioni rimangono difficili da rievocare.";
