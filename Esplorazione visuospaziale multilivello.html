@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Esercizio di Stimolazione Cognitiva</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SDK Firebase versione Compatibilità -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body {
             touch-action: none;
@@ -76,7 +79,6 @@
             100% { transform: scale(1); opacity: 0; }
         }
         
-        /* Barra Lampeggiante Ottimizzata */
         #flashing-bar {
             position: absolute;
             top: 0;
@@ -217,7 +219,7 @@
             </div>
         </div>
 
-        <button id="btn-exit" onclick="resetToMenu()" class="absolute top-6 right-6 z-30 bg-white/95 backdrop-blur text-gray-600 hover:text-red-600 font-bold px-5 py-1.5 rounded-full border border-gray-200 shadow-sm active:scale-95 transition-all">
+        <button id="btn-exit" onclick="showExitConfirmModal()" class="absolute top-6 right-6 z-30 bg-white/95 backdrop-blur text-gray-600 hover:text-red-600 font-bold px-5 py-1.5 rounded-full border border-gray-200 shadow-sm active:scale-95 transition-all">
             Esci 🚪
         </button>
         
@@ -226,7 +228,6 @@
         <div id="feedback"></div>
     </div>
 
-    <!-- Schermata Finale -->
     <div id="end-screen" class="screen">
         <div class="bg-white p-8 rounded-3xl shadow-2xl text-center w-full max-w-xl mx-4 border-b-8 border-blue-500">
             <h2 class="text-3xl font-black text-gray-800 mb-6 uppercase tracking-wider">Sessione Completata</h2>
@@ -246,10 +247,34 @@
                 </div>
             </div>
 
-            <button onclick="resetToMenu()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full text-xl active:scale-95 shadow-md w-full transition-transform">
-                Nuova Sessione
+            <!-- Pulsante che scatena il salvataggio standardizado su Firebase -->
+            <button id="btn-save-data" onclick="completaESalvaEsercizio()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full text-xl active:scale-95 shadow-md w-full transition-transform">
+                Invia e Continua
             </button>
         </div>
+    </div>
+
+    <!-- Modal Conferma Uscita -->
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl max-w-sm mx-4 text-center border-t-8 border-red-500">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Interrompere la sessione?</h3>
+            <p class="text-gray-500 text-sm mb-6">I progressi di questa sessione non verranno salvati.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeExitConfirmModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-5 rounded-xl text-sm transition-all active:scale-95">
+                    Annulla
+                </button>
+                <button onclick="executeExit()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow-md transition-all active:scale-95">
+                    Esci 🚪
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay Caricamento/Salvataggio -->
+    <div id="saving-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] hidden flex-col items-center justify-center text-white">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <p class="text-lg font-bold">Salvataggio dei risultati...</p>
+        <p class="text-sm text-gray-300">Non chiudere la finestra</p>
     </div>
 
     <script>
@@ -266,6 +291,10 @@
         const soundCorrectToggle = document.getElementById('sound-correct-toggle');
         const soundErrorToggle = document.getElementById('sound-error-toggle');
         const instructionBanner = document.getElementById('instruction-banner');
+        
+        // Elementi modali custom
+        const exitModal = document.getElementById('custom-confirm-modal');
+        const savingOverlay = document.getElementById('saving-overlay');
 
         let score = 0, errors = 0;
         let sessionDuration = 120, timeLeft = 120; 
@@ -274,12 +303,36 @@
         let currentType = 'circle', difficulty = 'base', barSide = 'left';
         let stimulusAppearanceTime = 0, reactionTimes = [];
         
-        // Variabili specifiche per il livello shifting
         let currentTargetType = 'circle'; // 'circle' o 'square'
-        let consecutiveCorrectHits = 0;   // Ogni 3 risposte corrette cambia obiettivo
+        let consecutiveCorrectHits = 0;   // Cambio obiettivo nello Shifting
 
         let lastX = -1, lastY = -1;
         const STIMULUS_SIZE = 100;
+
+        let db = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSessione = urlParams.get('sessione') === 'true';
+        const pazienteId = urlParams.get('pazienteId');
+        const sessioneId = urlParams.get('sessioneId') || urlParams.get('sessionId');
+        const exerciseIndex = parseInt(urlParams.get('index') || '0', 10);
+        const isPianificata = urlParams.get('pianificata') === 'true' || !!sessioneId;
+
+        // Tentativo di inizializzazione di Firebase usando la configurazione da localStorage
+        try {
+            const savedConfig = localStorage.getItem('firebaseConfig');
+            if (savedConfig) {
+                const firebaseConfig = JSON.parse(savedConfig);
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.database();
+                console.log("Firebase correttamente inizializzato con config locale.");
+            } else {
+                console.warn("Configurazione Firebase non trovata in localStorage. Modalità offline o integrazione mancante.");
+            }
+        } catch (e) {
+            console.error("Errore nell'inizializzazione di Firebase:", e);
+        }
 
         let audioCtx = null;
         function playSound(type) {
@@ -387,13 +440,12 @@
             } else if (difficulty === 'difficile') {
                 currentType = rand > 0.5 ? 'circle' : (rand > 0.25 ? 'square' : 'triangle');
             } else if (difficulty === 'shifting') {
-                // Nel livello shifting, presentiamo in modo bilanciato le forme
                 if (rand > 0.6) {
-                    currentType = currentTargetType; // 40% probabilità del target attuale
+                    currentType = currentTargetType; 
                 } else if (rand > 0.25) {
-                    currentType = currentTargetType === 'circle' ? 'square' : 'circle'; // 35% l'altro stimolo (ora distrattore)
+                    currentType = currentTargetType === 'circle' ? 'square' : 'circle'; 
                 } else {
-                    currentType = 'triangle'; // 25% triangolo giallo
+                    currentType = 'triangle'; 
                 }
             }
 
@@ -412,19 +464,18 @@
                 stimulus.appendChild(tri); 
             }
 
-            // Gestione dei timer di sparizione (i distrattori spariscono dopo 4 secondi)
+            // Un distrattore sparisce automaticamente dopo 4 secondi nei livelli avanzati
             let isCurrentTarget = (difficulty === 'shifting') ? (currentType === currentTargetType) : (currentType === 'circle');
             
             if (!isCurrentTarget && difficulty !== 'base') {
-                // Se è un distrattore (o non è il bersaglio attuale nel shifting), sposta dopo 4 secondi
                 stimulusTimeout = setTimeout(() => {
                     if (gameActive && !isTransitioning) moveStimulus();
                 }, 4000);
             }
 
-            // Calcolo posizionamento sicuro dello stimolo
+            // Calcolo coordinate sicure nel viewport
             const barPadding = distractorToggle.checked ? 85 : 45;
-            const topPadding = difficulty === 'shifting' ? 180 : 140; // Più spazio se c'è il banner shifting
+            const topPadding = difficulty === 'shifting' ? 180 : 140; 
             const bottomPadding = 60;
 
             const availW = window.innerWidth - STIMULUS_SIZE - (barPadding * 2);
@@ -460,7 +511,7 @@
             difficulty = mode;
             score = 0; errors = 0; reactionTimes = [];
             consecutiveCorrectHits = 0;
-            currentTargetType = 'circle'; // Reset del target iniziale dello shifting
+            currentTargetType = 'circle'; 
             timeLeft = sessionDuration;
             gameActive = true;
             isTransitioning = false;
@@ -505,6 +556,21 @@
             }
         }
 
+        function showExitConfirmModal() {
+            exitModal.classList.remove('hidden');
+            exitModal.classList.add('flex');
+        }
+
+        function closeExitConfirmModal() {
+            exitModal.classList.add('hidden');
+            exitModal.classList.remove('flex');
+        }
+
+        function executeExit() {
+            closeExitConfirmModal();
+            resetToMenu();
+        }
+
         function resetToMenu() {
             gameActive = false; 
             clearInterval(timerInterval);
@@ -527,7 +593,6 @@
             isTransitioning = true;
             const rect = stimulus.getBoundingClientRect();
             
-            // Verifica se lo stimolo premuto è corretto in base al livello
             let isCorrect = false;
             if (difficulty === 'shifting') {
                 isCorrect = (currentType === currentTargetType);
@@ -541,7 +606,6 @@
                 reactionTimes.push(performance.now() - stimulusAppearanceTime);
                 showFeedback('correct', rect.left + 50, rect.top);
                 
-                // Se siamo nel livello shifting, monitoriamo la necessità di cambiare bersaglio
                 if (difficulty === 'shifting') {
                     consecutiveCorrectHits++;
                     if (consecutiveCorrectHits >= 3) {
@@ -552,7 +616,6 @@
             } else {
                 errors++; 
                 showFeedback('error', rect.left + 50, rect.top);
-                // Resettiamo le risposte consecutive corrette in caso di errore
                 if (difficulty === 'shifting') {
                     consecutiveCorrectHits = 0;
                 }
@@ -567,6 +630,126 @@
         window.addEventListener('resize', () => {
             if (gameActive) moveStimulus();
         });
+
+        function completaESalvaEsercizio() {
+            savingOverlay.classList.remove('hidden');
+            savingOverlay.classList.add('flex');
+
+            const totaleDomande = score + errors;
+            const accuratezza = totaleDomande > 0 ? Math.round((score / totaleDomande) * 100) : 0;
+            const avgReactionTime = reactionTimes.length > 0
+                ? parseFloat((reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length / 1000).toFixed(2))
+                : 0;
+
+            const datiEsercizio = {
+                titolo: "Esercizio di Stimolazione Multilivello", // Corrisponde al data-title della dashboard
+                risultati: {
+                    risposteCorrette: score,
+                    totaleDomande: totaleDomande,
+                    percentualeAccuratezza: accuratezza,
+                    tempoMedioS: avgReactionTime,
+                    punteggio: score
+                }
+            };
+
+            console.log("Salvataggio dati standardizzati:", datiEsercizio);
+
+            // Verifica dell'ambiente database e salvataggio
+            if (!db || !pazienteId) {
+                console.warn("Firebase non configurato o pazienteId mancante. Reindirizzamento offline.");
+                setTimeout(() => {
+                    savingOverlay.classList.add('hidden');
+                    savingOverlay.classList.remove('flex');
+                    eseguiReindirizzamento();
+                }, 1000);
+                return;
+            }
+
+            if (isPianificata && sessioneId) {
+                // SESSIONE PIANIFICATA: Salva nel nodo dell'esercizio corrente
+                const refPath = `storico_pazienti/${pazienteId}/sessioni/${sessioneId}/esercizi/${exerciseIndex}`;
+                db.ref(refPath).update({
+                    risultati: datiEsercizio.risultati,
+                    completato: true,
+                    stato: "completato"
+                }).then(() => {
+                    console.log("Dati salvati con successo per sessione pianificata.");
+                    fineSalvataggio();
+                }).catch(err => {
+                    console.error("Errore salvataggio sessione pianificata:", err);
+                    fineSalvataggio();
+                });
+            } else {
+                // SESSIONE LIBERA: Trova l'ultimo blocco di sessione ed aggiungi a eserciziSvolti
+                const sessionsRef = db.ref(`storico_pazienti/${pazienteId}/sessioni`);
+                sessionsRef.orderByChild('timestamp').limitToLast(1).once('value', snapshot => {
+                    let lastSessionId = null;
+                    let eserciziSvolti = [];
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach(child => {
+                            lastSessionId = child.key;
+                            if (child.val().eserciziSvolti) {
+                                eserciziSvolti = child.val().eserciziSvolti;
+                            }
+                        });
+                    }
+                    
+                    if (lastSessionId) {
+                        // Aggiunge all'array eserciziSvolti esistente
+                        const nextIndex = Array.isArray(eserciziSvolti) ? eserciziSvolti.length : Object.keys(eserciziSvolti).length;
+                        db.ref(`storico_pazienti/${pazienteId}/sessioni/${lastSessionId}/eserciziSvolti/${nextIndex}`).set(datiEsercizio)
+                        .then(() => {
+                            console.log("Dati inseriti nell'array eserciziSvolti della sessione corrente.");
+                            fineSalvataggio();
+                        }).catch(err => {
+                            console.error("Errore append esercizio sessione libera:", err);
+                            fineSalvataggio();
+                        });
+                    } else {
+                        // Crea una nuova sessione libera se non ce ne sono di attive
+                        const newSessionRef = sessionsRef.push();
+                        newSessionRef.set({
+                            tipo: "libera",
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            data: new Date().toLocaleDateString('it-IT'),
+                            eserciziSvolti: [datiEsercizio]
+                        }).then(() => {
+                            console.log("Nuova sessione libera creata con dati esercizio inseriti.");
+                            fineSalvataggio();
+                        }).catch(err => {
+                            console.error("Errore creazione blocco sessione libera:", err);
+                            fineSalvataggio();
+                        });
+                    }
+                });
+            }
+        }
+
+        function fineSalvataggio() {
+            setTimeout(() => {
+                savingOverlay.classList.add('hidden');
+                savingOverlay.classList.remove('flex');
+                eseguiReindirizzamento();
+            }, 1000);
+        }
+
+        function eseguiReindirizzamento() {
+            const redirectUrl = urlParams.get('redirectUrl');
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                // PostMessage di backup per portali o iframe integrati
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ 
+                        type: 'exercise_completed', 
+                        exerciseTitle: "Esercizio di Stimolazione Multilivello",
+                        score: score 
+                    }, '*');
+                }
+                resetToMenu();
+            }
+        }
     </script>
 </body>
 </html>
