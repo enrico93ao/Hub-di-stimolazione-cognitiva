@@ -249,12 +249,20 @@
             font-weight: 700;
             color: var(--primary-blue);
         }
+
+        /* Stato di caricamento database */
+        .db-status {
+            font-size: 0.9rem;
+            margin-top: 15px;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         
+        <!-- SCHERMATA INIZIALE -->
         <div id="start-screen" class="screen active">
             <h1>Alternanza Regolata</h1>
             <p>Questo esercizio mappa le tue capacità di <strong>Set-Shifting</strong> (flessibilità cognitiva), misurando la velocità di adattamento della mente di fronte a regole che cambiano repentinamente.</p>
@@ -281,12 +289,13 @@
             <button class="btn" id="start-btn">Inizia l'Esercizio</button>
         </div>
 
+        <!-- SCHERMATA DI GIOCO -->
         <div id="game-screen" class="screen">
             <div class="game-header">
                 <div class="progress-bar-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
-                <button class="btn-menu" id="abort-btn">Torna al menu</button>
+                <button class="btn-menu" id="abort-btn">Abbandona</button>
             </div>
             
             <div class="timer-container">
@@ -301,6 +310,7 @@
             </div>
         </div>
 
+        <!-- SCHERMATA FINALE -->
         <div id="result-screen" class="screen">
             <h1>Analisi delle Performance</h1>
             <p>Esercizio completato. Di seguito sono riportati i risultati ottenuti nel blocco di trial.</p>
@@ -328,13 +338,38 @@
                 </tbody>
             </table>
 
-            <button class="btn" id="restart-btn" style="margin-right: 10px;">Ripeti l'Esercizio</button>
-            <button class="btn btn-menu" id="home-btn" style="padding: 14px 24px; font-size: 1.1rem; font-weight: 600;">Menu Iniziale</button>
+            <div id="db-status-text" class="db-status">Invio dei dati al server in corso...</div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn" id="restart-btn" style="margin-right: 10px;">Ripeti l'Esercizio</button>
+                <button class="btn btn-menu" id="home-btn" style="padding: 14px 24px; font-size: 1.1rem; font-weight: 600;">Menu Iniziale</button>
+            </div>
         </div>
 
     </div>
 
-    <script>
+    <!-- SCRIPT CONFIGURAZIONE ED INTEGRAZIONE DATABASE (FIREBASE V9+) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // CONFIGURAZIONE FIREBASE (Usa la stessa configurazione centralizzata usata in index.html)
+        const firebaseConfig = {
+            databaseURL: "https://riabilitazione-cognitiva-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        // Inizializzazione Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- Gestione Parametri URL (Query String) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSessionActive = urlParams.get('sessione') === 'true';
+        const pazienteId = urlParams.get('pazienteId');
+        const sessioneId = urlParams.get('sessioneId');
+        const modalita = urlParams.get('modalita'); // 'pianificata' o 'libera'
+        const esercizioIndex = parseInt(urlParams.get('esercizioIndex'), 10);
+
         // --- Configurazione Task ---
         const TOTAL_TRIALS = 30;
         const TIME_LIMIT = 4000; 
@@ -351,6 +386,7 @@
         
         let stimulusData = {};
         let trialStartTime = 0;
+        let taskStartTime = 0;
         let animationFrameId = null;
 
         // --- Elementi DOM ---
@@ -372,6 +408,7 @@
         const resAccuracy = document.getElementById('res-accuracy');
         const resRtStay = document.getElementById('res-rt-stay');
         const resRtSwitch = document.getElementById('res-rt-switch');
+        const dbStatusText = document.getElementById('db-status-text');
 
         // --- Event Listeners ---
         startBtn.addEventListener('click', startTask);
@@ -390,12 +427,18 @@
             runsLeftOfCurrentRule = getRandomRunLength();
             
             showScreen('game-screen');
+            taskStartTime = window.performance.now();
             nextTrial();
         }
 
         function returnToMenu() {
             cancelAnimationFrame(animationFrameId);
-            showScreen('start-screen');
+            if (isSessionActive) {
+                // Se c'è una sessione attiva, torna all'Hub o Dashboard principale
+                window.location.href = `index.html?pazienteId=${pazienteId || ''}&sessioneId=${sessioneId || ''}&sessione=true`;
+            } else {
+                showScreen('start-screen');
+            }
         }
 
         function showScreen(screenId) {
@@ -525,10 +568,10 @@
         function endTask() {
             cancelAnimationFrame(animationFrameId);
             showScreen('result-screen');
-            calculateMetrics();
+            calculateMetricsAndSave();
         }
 
-        function calculateMetrics() {
+        async function calculateMetricsAndSave() {
             const total = trialsHistory.length;
             const correctTrials = trialsHistory.filter(t => t.correct);
             const accuracy = (correctTrials.length / total) * 100;
@@ -544,9 +587,72 @@
                 ? switchTrials.reduce((sum, t) => sum + t.rt, 0) / switchTrials.length 
                 : null;
 
+            // Calcola il tempo totale dell'esercizio in secondi
+            const totalElapsedTimeS = (window.performance.now() - taskStartTime) / 1000;
+
+            // Visualizza a schermo
             resAccuracy.textContent = `${accuracy.toFixed(1)}%`;
             resRtStay.textContent = avgRtStay ? `${Math.round(avgRtStay)} ms` : '--';
             resRtSwitch.textContent = avgRtSwitch ? `${Math.round(avgRtSwitch)} ms` : '--';
+
+            // STRUTTURA STANDARD DI SALVATAGGIO DEI DATI DELL'ESERCIZIO
+            const datiEsercizio = {
+                titolo: "Alternanza Regolata", // Corrisponde al data-title definito nella dashboard
+                risultati: {
+                    risposteCorrette: correctTrials.length,
+                    totaleDomande: total,
+                    percentualeAccuratezza: Math.round(accuracy),
+                    tempoMedioS: parseFloat(totalElapsedTimeS.toFixed(1)),
+                    punteggio: Math.round(accuracy * 10) // Punteggio d'esercizio indicativo
+                }
+            };
+
+            // Se la sessione non è attiva, salta il salvataggio remoto
+            if (!isSessionActive || !pazienteId) {
+                dbStatusText.textContent = "Modalità Ospite: dati non salvati sul cloud.";
+                return;
+            }
+
+            dbStatusText.textContent = "Salvataggio dei dati in corso...";
+
+            try {
+                if (modalita === 'pianificata') {
+                    // SESSIONE PIANIFICATA
+                    if (sessioneId && !isNaN(esercizioIndex)) {
+                        const pathPianificata = `storico_pazienti/${pazienteId}/sessioni/${sessioneId}/eserciziSvolti/${esercizioIndex}`;
+                        await set(ref(db, pathPianificata), datiEsercizio);
+                        
+                        dbStatusText.innerHTML = "<span style='color: #22c55e;'>✓ Salvato! Reindirizzamento alla sessione...</span>";
+                        setTimeout(() => {
+                            window.location.href = `index.html?pazienteId=${pazienteId}&sessioneId=${sessioneId}&sessione=true`;
+                        }, 1500);
+                    } else {
+                        throw new Error("Dati sessione pianificata mancanti o corrotti nell'URL.");
+                    }
+                } else {
+                    // SESSIONE LIBERA
+                    // Recuperiamo l'ultimo blocco di sessione attiva per aggiungervi l'esercizio svolto
+                    const sessioniRef = ref(db, `storico_pazienti/${pazienteId}/sessioni`);
+                    const snapshot = await get(sessioniRef);
+
+                    if (snapshot.exists()) {
+                        const sessioniData = snapshot.val();
+                        // Trova l'id dell'ultima sessione creata basandoti sulle chiavi (ordinate cronologicamente da Firebase push)
+                        const sessionKeys = Object.keys(sessioniData);
+                        const lastSessionId = sessionKeys[sessionKeys.length - 1];
+
+                        const pathLibera = `storico_pazienti/${pazienteId}/sessioni/${lastSessionId}/eserciziSvolti`;
+                        await push(ref(db, pathLibera), datiEsercizio);
+                        
+                        dbStatusText.innerHTML = "<span style='color: #22c55e;'>✓ Salvato nella tua sessione libera!</span>";
+                    } else {
+                        throw new Error("Nessuna sessione trovata per il paziente. Avviane una dalla Dashboard.");
+                    }
+                }
+            } catch (error) {
+                console.error("Errore Firebase:", error);
+                dbStatusText.innerHTML = `<span style='color: #ef4444;'>Errore durante il salvataggio: ${error.message}</span>`;
+            }
         }
     </script>
 </body>
