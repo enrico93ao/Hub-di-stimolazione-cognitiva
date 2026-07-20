@@ -56,13 +56,10 @@
 <body>
 
     <div id="top-bar">
-        <!-- Sezione Sinistra: Tasto per saltare/cambiare esercizio e Tasto per terminare -->
+        <!-- Sezione Sinistra: Tasto Prossimo Esercizio -->
         <div class="top-bar-left">
-            <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
-                <i class="fa-solid fa-arrow-right"></i> Cambia Esercizio
-            </button>
-            <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
-                <i class="fa-solid fa-power-off"></i> Termina Sessione
+            <button class="btn-action btn-next" id="next-exercise-btn" onclick="nextExercise()">
+                <i class="fa-solid fa-arrow-right"></i> Prossimo Esercizio
             </button>
         </div>
 
@@ -73,9 +70,12 @@
             </div>
         </div>
 
-        <!-- Sezione Destra: Titolo dell'esercizio -->
+        <!-- Sezione Destra: Titolo e Tasto Termina Sessione -->
         <div class="top-bar-right">
             <div id="exercise-title">Caricamento in corso...</div>
+            <button class="btn-action btn-danger" id="end-session-btn" onclick="requestEndSession()">
+                <i class="fa-solid fa-power-off"></i> Termina Sessione
+            </button>
         </div>
     </div>
 
@@ -185,7 +185,9 @@
                     if (fileDirect) {
                         const esFile = decodeURIComponent(fileDirect);
                         document.getElementById('exercise-iframe').src = esFile;
-                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero: ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
+                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero`;
+                        // Nelle sessioni libere, il tasto sinistro rimanda alla scelta di un altro esercizio senza chiudere la sessione
+                        document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
                     } else {
                         window.location.href = "esercizi.html";
                     }
@@ -197,7 +199,8 @@
                 if (fileDirect) {
                     const esFile = decodeURIComponent(fileDirect);
                     document.getElementById('exercise-iframe').src = esFile;
-                    document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
+                    document.getElementById('exercise-title').textContent = `${localUsername} ➔ Esercizio Libero`;
+                    document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
                 } else {
                     window.location.href = "esercizi.html";
                 }
@@ -211,39 +214,47 @@
             if (esercizi && index < esercizi.length) {
                 const esercizioAttivo = esercizi[index];
                 document.getElementById('exercise-iframe').src = esercizioAttivo.file;
-                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
-                // Mostra il tasto "Cambia Esercizio" (Avanti) se ci sono più esercizi in una sessione pianificata
-                document.getElementById('next-btn').style.display = "inline-flex";
+                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioTesto(esercizioAttivo.titolo)}`;
             } else {
-                prepareFinalResults("Sessione Pianificata Completa", activeSession.esercizi);
+                // Se la lista pianificata è finita, mostra direttamente i risultati finali
+                showFinalResultsScreen("Sessione Pianificata Completa", activeSession.esercizi);
             }
         }
 
-        window.nextStep = async function() {
-            if (!activeSession) return;
-
-            const index = activeSession.indiceCorrente;
-            const sessionRef = ref(db, 'sessione_attiva');
-            const nuovoIndice = index + 1;
-            
-            await update(sessionRef, {
-                indiceCorrente: nuovoIndice
-            });
-
-            activeSession.indiceCorrente = nuovoIndice;
-            loadCurrentExerciseFromSession();
+        function esercizioTesto(t) {
+            return t || "Esercizio";
         }
 
-        window.exitSession = async function() {
+        // Tasto in alto a sinistra: Passa al prossimo esercizio della scaletta o permette di scegliere un altro esercizio libero
+        window.nextExercise = async function() {
+            if (activeSession && activeSession.tipo !== 'libera') {
+                const index = activeSession.indiceCorrente;
+                const sessionRef = ref(db, 'sessione_attiva');
+                const nuovoIndice = index + 1;
+                
+                await update(sessionRef, {
+                    indiceCorrente: nuovoIndice
+                });
+
+                activeSession.indiceCorrente = nuovoIndice;
+                loadCurrentExerciseFromSession();
+            } else {
+                // Se è una sessione libera, riporta alla pagina di scelta esercizi mantenendo lo stato attivo
+                window.location.href = "esercizi.html";
+            }
+        }
+
+        // Tasto in alto a destra: Termina Sessione (Apre il questionario di feedback finale)
+        window.requestEndSession = async function() {
             if (!activeSession) {
                 let fatti = parseInt(localStorage.getItem('exercises_done_counter') || '0');
                 localStorage.setItem('exercises_done_counter', (fatti + 1).toString());
                 
                 const params = new URLSearchParams(window.location.search);
                 const fileDirect = params.get('file');
-                const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
+                const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Singolo";
                 
-                prepareFinalResults("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
+                showFinalResultsScreen("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
                 return;
             }
 
@@ -251,14 +262,15 @@
                 const params = new URLSearchParams(window.location.search);
                 const fileDirect = params.get('file');
                 const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
-                prepareFinalResults("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
+                showFinalResultsScreen("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
             } else if (isSessionPianificata) {
-                const completati = activeSession.esercizi.slice(0, activeSession.indiceCorrente);
-                prepareFinalResults("Sessione Pianificata Interrotta", completati.length > 0 ? completati : [{titolo: "Nessun esercizio completato", file: ""}]);
+                // Prende tutti gli esercizi completati fino a questo momento
+                const completati = activeSession.esercizi.slice(0, activeSession.indiceCorrente + 1);
+                showFinalResultsScreen("Sessione Pianificata Interrotta", completati.length > 0 ? completati : [{titolo: "Nessun esercizio completato", file: ""}]);
             }
         }
 
-        function prepareFinalResults(tipoSessione, eserciziSvoltiList) {
+        function showFinalResultsScreen(tipoSessione, eserciziSvoltiList) {
             document.getElementById('exercise-iframe').style.display = "none";
             document.getElementById('top-bar').style.display = "none";
             
@@ -273,7 +285,7 @@
             
             eserciziSvoltiList.forEach((es) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
+                li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo || "Esercizio"}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
                 list.appendChild(li);
             });
 
