@@ -61,9 +61,25 @@
             z-index: 100;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .nav-logo { font-weight: 800; font-size: 1.4rem; color: var(--slate-900); display: flex; align-items: center; gap: 12px; letter-spacing: -1px; }
-        .nav-logo img { height: 32px; width: auto; object-fit: contain; } /* Stile per il logo */
-        .nav-logo i { color: var(--primary-light); }
+        .nav-logo { 
+            font-weight: 800; 
+            font-size: 1.5rem; 
+            color: var(--slate-900); 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            letter-spacing: -1px; 
+        }
+        .nav-logo img { 
+            height: 45px; /* Aumentato per maggiore visibilità */
+            width: auto; 
+            object-fit: contain; 
+            transition: var(--transition);
+        }
+        .nav-logo img:hover {
+            transform: scale(1.05);
+        }
+        
         .user-badge { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 8px 20px; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; }
         .btn-exit { background: #f1f5f9; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #e2e8f0; color: var(--slate-900); }
@@ -212,8 +228,7 @@
     <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-logo">
-            <img src="logo.png" alt="CogniLab Logo">
-            <i class="fa-solid fa-brain"></i> CogniLab
+            <img src="logo.png" alt="CogniLab Logo"> CogniLab
         </div>
         <div style="display: flex; align-items: center; gap: 18px;">
             <div id="user-display" class="user-badge">Ospite</div>
