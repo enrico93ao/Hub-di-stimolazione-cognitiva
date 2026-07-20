@@ -11,8 +11,8 @@
         
         #top-bar { height: 80px; background-color: #ffffff; color: #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
         
-        .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; }
-        .top-bar-right { justify-content: flex-end; gap: 10px; }
+        .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; gap: 10px; }
+        .top-bar-right { justify-content: flex-end; }
         .top-bar-center { flex: 1; display: flex; justify-content: center; align-items: center; }
         
         .logo-container img {
@@ -56,23 +56,26 @@
 <body>
 
     <div id="top-bar">
+        <!-- Sezione Sinistra: Tasto per saltare/cambiare esercizio e Tasto per terminare -->
         <div class="top-bar-left">
+            <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
+                <i class="fa-solid fa-arrow-right"></i> Cambia Esercizio
+            </button>
             <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
-                <i class="fa-solid fa-arrow-left"></i> Termina Sessione
+                <i class="fa-solid fa-power-off"></i> Termina Sessione
             </button>
         </div>
 
+        <!-- Sezione Centrale: Logo -->
         <div class="top-bar-center">
             <div class="logo-container">
                 <img src="logo.png" alt="Logo Hub Cognitivo">
             </div>
         </div>
 
+        <!-- Sezione Destra: Titolo dell'esercizio -->
         <div class="top-bar-right">
             <div id="exercise-title">Caricamento in corso...</div>
-            <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
-                Avanti <i class="fa-solid fa-arrow-right"></i>
-            </button>
         </div>
     </div>
 
@@ -164,7 +167,7 @@
 
         let activeSession = null;
         let isSessionPianificata = false;
-        let sessionDataToSave = null; // Buffer per i dati da inviare a firebase
+        let sessionDataToSave = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
@@ -183,7 +186,6 @@
                         const esFile = decodeURIComponent(fileDirect);
                         document.getElementById('exercise-iframe').src = esFile;
                         document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero: ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-                        document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-check"></i> Termina e Valuta';
                     } else {
                         window.location.href = "esercizi.html";
                     }
@@ -196,7 +198,6 @@
                     const esFile = decodeURIComponent(fileDirect);
                     document.getElementById('exercise-iframe').src = esFile;
                     document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-                    document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-arrow-left"></i> Termina Allenamento';
                 } else {
                     window.location.href = "esercizi.html";
                 }
@@ -211,6 +212,7 @@
                 const esercizioAttivo = esercizi[index];
                 document.getElementById('exercise-iframe').src = esercizioAttivo.file;
                 document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
+                // Mostra il tasto "Cambia Esercizio" (Avanti) se ci sono più esercizi in una sessione pianificata
                 document.getElementById('next-btn').style.display = "inline-flex";
             } else {
                 prepareFinalResults("Sessione Pianificata Completa", activeSession.esercizi);
@@ -236,7 +238,12 @@
             if (!activeSession) {
                 let fatti = parseInt(localStorage.getItem('exercises_done_counter') || '0');
                 localStorage.setItem('exercises_done_counter', (fatti + 1).toString());
-                window.location.href = "esercizi.html";
+                
+                const params = new URLSearchParams(window.location.search);
+                const fileDirect = params.get('file');
+                const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
+                
+                prepareFinalResults("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
                 return;
             }
 
@@ -270,7 +277,6 @@
                 list.appendChild(li);
             });
 
-            // Prepara l'oggetto da salvare su Firebase
             sessionDataToSave = {
                 pazienteId: activeSession ? activeSession.pazienteId : "utente_singolo",
                 data: new Date().toISOString(),
@@ -280,7 +286,6 @@
         }
 
         window.concludiESalvaFeedback = async function() {
-            // Raccoglie i valori delle stelline
             const feedbackValues = {};
             document.querySelectorAll('.star-rating').forEach(group => {
                 const paramName = group.getAttribute('data-param');
