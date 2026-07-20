@@ -1,213 +1,4 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esercizio - Hub Cognitivo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; background-color: #f8fafc; }
-        
-        #top-bar { height: 80px; background-color: #ffffff; color: #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
-        
-        .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; gap: 10px; }
-        .top-bar-right { justify-content: flex-end; }
-        .top-bar-center { flex: 1; display: flex; justify-content: center; align-items: center; }
-        
-        .logo-container img {
-            max-height: 65px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .btn-action { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-action:hover { background-color: #e2e8f0; color: #0f172a; }
-        
-        .btn-next { background-color: #10b981; color: white; border: none; }
-        .btn-next:hover { background-color: #059669; color: white; }
-        
-        .btn-danger { background-color: #ffeeef; color: #dc2626; border-color: #fecaca; }
-        .btn-danger:hover { background-color: #fef2f2; color: #b91c1c; }
-        
-        #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; }
-        #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 80px); border: none; background: #ffffff; }
-        
-        /* Modal Risultati e Feedback */
-        #results-screen { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); z-index: 999; color: #0f172a; flex-direction: column; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
-        .results-box { background: #ffffff; padding: 30px 40px; border-radius: 24px; max-width: 650px; width: 100%; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); text-align: center; margin: auto; }
-        .results-box h2 { font-size: 1.8rem; color: #2563eb; margin-bottom: 10px; }
-        .results-list { list-style: none; margin: 15px 0; text-align: left; max-height: 150px; overflow-y: auto; padding-right: 5px; }
-        .results-list li { padding: 10px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-size: 1rem; color: #334155; }
-
-        /* Sezione Feedback con Stelline */
-        .feedback-section { margin-top: 20px; border-top: 2px dashed #e2e8f0; padding-top: 20px; text-align: left; }
-        .feedback-section h3 { font-size: 1.1rem; color: #1e293b; margin-bottom: 15px; text-align: center; }
-        .feedback-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.95rem; color: #475569; }
-        
-        .star-rating { display: flex; flex-direction: row-reverse; gap: 4px; justify-content: flex-end; }
-        .star-rating input { display: none; }
-        .star-rating label { font-size: 1.4rem; color: #cbd5e1; cursor: pointer; transition: color 0.2s; }
-        .star-rating input:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label { color: #f59e0b; }
-
-        /* =========================================
-           OTTIMIZZAZIONE MOBILE E TABLET (Responsive)
-           ========================================= */
-        @media (max-width: 768px) {
-            #top-bar { 
-                height: auto; 
-                min-height: 80px; 
-                flex-direction: column; 
-                padding: 10px; 
-                gap: 10px; 
-            }
-            
-            .top-bar-left, .top-bar-right, .top-bar-center { 
-                width: 100%; 
-                justify-content: center; 
-                flex: none; 
-            }
-            
-            .top-bar-right {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .logo-container img { 
-                max-height: 50px; 
-            }
-
-            #exercise-title { 
-                font-size: 0.95rem; 
-                text-align: center; 
-            }
-
-            .btn-action { 
-                width: 100%; 
-                justify-content: center; 
-                padding: 12px; 
-                font-size: 1rem; 
-            }
-
-            .results-box { 
-                padding: 20px; 
-                margin: 10px; 
-                border-radius: 16px; 
-            }
-            
-            .results-box h2 { 
-                font-size: 1.5rem; 
-            }
-
-            .feedback-item { 
-                flex-direction: column; 
-                align-items: flex-start; 
-                gap: 8px; 
-                margin-bottom: 20px; 
-            }
-            
-            .star-rating label { 
-                font-size: 2rem; 
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="top-bar">
-        <!-- Sezione Sinistra: Tasto Prossimo Esercizio -->
-        <div class="top-bar-left">
-            <button class="btn-action btn-next" id="next-exercise-btn" onclick="nextExercise()">
-                <i class="fa-solid fa-arrow-right"></i> Prossimo Esercizio
-            </button>
-        </div>
-
-        <!-- Sezione Centrale: Logo -->
-        <div class="top-bar-center">
-            <div class="logo-container">
-                <img src="logo.png" alt="Logo Hub Cognitivo">
-            </div>
-        </div>
-
-        <!-- Sezione Destra: Titolo e Tasto Termina Sessione -->
-        <div class="top-bar-right">
-            <div id="exercise-title">Caricamento in corso...</div>
-            <button class="btn-action btn-danger" id="end-session-btn" onclick="requestEndSession()">
-                <i class="fa-solid fa-power-off"></i> Termina Sessione
-            </button>
-        </div>
-    </div>
-
-    <iframe id="exercise-iframe" src=""></iframe>
-
-    <!-- Schermata di Fine Sessione e Feedback -->
-    <div id="results-screen">
-        <div class="results-box">
-            <h2><i class="fa-solid fa-square-poll-vertical"></i> Sessione Conclusa!</h2>
-            <p id="paziente-concluso" style="font-size: 1.1rem; color: #64748b; margin-bottom: 15px;"></p>
-            
-            <ul class="results-list" id="final-stats">
-                <!-- Esercizi completati -->
-            </ul>
-
-            <!-- Modulo di Feedback Clinico / Soggettivo -->
-            <div class="feedback-section">
-                <h3>Valutazione della Sessione</h3>
-                
-                <div class="feedback-item">
-                    <span>1. Gradimento dell'attività</span>
-                    <div class="star-rating" data-param="gradimento">
-                        <input type="radio" id="grad-5" name="gradimento" value="5"><label for="grad-5"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="grad-4" name="gradimento" value="4"><label for="grad-4"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="grad-3" name="gradimento" value="3"><label for="grad-3"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="grad-2" name="gradimento" value="2"><label for="grad-2"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="grad-1" name="gradimento" value="1"><label for="grad-1"><i class="fa-solid fa-star"></i></label>
-                    </div>
-                </div>
-
-                <div class="feedback-item">
-                    <span>2. Livello di affaticamento</span>
-                    <div class="star-rating" data-param="affaticamento">
-                        <input type="radio" id="aff-5" name="affaticamento" value="5"><label for="aff-5"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="aff-4" name="affaticamento" value="4"><label for="aff-4"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="aff-3" name="affaticamento" value="3"><label for="aff-3"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="aff-2" name="affaticamento" value="2"><label for="aff-2"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="aff-1" name="affaticamento" value="1"><label for="aff-1"><i class="fa-solid fa-star"></i></label>
-                    </div>
-                </div>
-
-                <div class="feedback-item">
-                    <span>3. Concentrazione mantenuta</span>
-                    <div class="star-rating" data-param="concentrazione">
-                        <input type="radio" id="conc-5" name="concentrazione" value="5"><label for="conc-5"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="conc-4" name="concentrazione" value="4"><label for="conc-4"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="conc-3" name="concentrazione" value="3"><label for="conc-3"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="conc-2" name="concentrazione" value="2"><label for="conc-2"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="conc-1" name="concentrazione" value="1"><label for="conc-1"><i class="fa-solid fa-star"></i></label>
-                    </div>
-                </div>
-
-                <div class="feedback-item">
-                    <span>4. Difficoltà percepita</span>
-                    <div class="star-rating" data-param="difficolta">
-                        <input type="radio" id="diff-5" name="difficolta" value="5"><label for="diff-5"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="diff-4" name="difficolta" value="4"><label for="diff-4"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="diff-3" name="difficolta" value="3"><label for="diff-3"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="diff-2" name="difficolta" value="2"><label for="diff-2"><i class="fa-solid fa-star"></i></label>
-                        <input type="radio" id="diff-1" name="difficolta" value="1"><label for="diff-1"><i class="fa-solid fa-star"></i></label>
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn-action btn-next" style="font-size: 1.1rem; padding: 12px 30px; margin-top: 20px; width: 100%; justify-content: center;" onclick="concludiESalvaFeedback()">
-                Salva e Torna all'Hub
-            </button>
-        </div>
-    </div>
-
-    <!-- Firebase SDK -->
+<!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, get, set, update, push } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -233,37 +24,40 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const fileDirect = params.get('file');
-
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
-            const sessionRef = ref(db, 'sessione_attiva');
-            const snapshot = await get(sessionRef);
+            // Se è stato passato un file direttamente nell'URL (Esercizio Singolo / Libero)
+            if (fileDirect) {
+                const esFile = decodeURIComponent(fileDirect);
+                document.getElementById('exercise-iframe').src = esFile;
+                document.getElementById('exercise-title').textContent = `${localUsername} ➔ Esercizio`;
+                document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
+                return; // Interrompiamo qui per evitare qualsiasi controllo Firebase non necessario che provochi il loop
+            }
 
-            if (snapshot.exists()) {
-                activeSession = snapshot.val();
-                
-                if (activeSession.tipo === 'libera') {
-                    if (fileDirect) {
-                        const esFile = decodeURIComponent(fileDirect);
-                        document.getElementById('exercise-iframe').src = esFile;
-                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero`;
+            // Altrimenti controlliamo se c'è una sessione attiva da database
+            try {
+                const sessionRef = ref(db, 'sessione_attiva');
+                const snapshot = await get(sessionRef);
+
+                if (snapshot.exists()) {
+                    activeSession = snapshot.val();
+                    
+                    if (activeSession.tipo === 'libera') {
+                        document.getElementById('exercise-iframe').style.display = "none";
+                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome}`;
                         document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
                     } else {
-                        window.location.href = "esercizi.html";
+                        isSessionPianificata = true;
+                        loadCurrentExerciseFromSession();
                     }
                 } else {
-                    isSessionPianificata = true;
-                    loadCurrentExerciseFromSession();
+                    // Nessuna sessione attiva e nessun file specificato: torniamo alla home in modo sicuro
+                    window.location.href = "index.html";
                 }
-            } else {
-                if (fileDirect) {
-                    const esFile = decodeURIComponent(fileDirect);
-                    document.getElementById('exercise-iframe').src = esFile;
-                    document.getElementById('exercise-title').textContent = `${localUsername} ➔ Esercizio Libero`;
-                    document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
-                } else {
-                    window.location.href = "esercizi.html";
-                }
+            } catch (error) {
+                console.error("Errore di connessione a Firebase:", error);
+                window.location.href = "index.html";
             }
         });
 
@@ -297,6 +91,7 @@
                 activeSession.indiceCorrente = nuovoIndice;
                 loadCurrentExerciseFromSession();
             } else {
+                // In modalità libera, riporta alla lista degli esercizi senza ricaricare in loop
                 window.location.href = "esercizi.html";
             }
         }
@@ -315,10 +110,7 @@
             }
 
             if (activeSession.tipo === 'libera') {
-                const params = new URLSearchParams(window.location.search);
-                const fileDirect = params.get('file');
-                const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
-                showFinalResultsScreen("Esercizio Libero", [{ titolo: esTitle, file: fileDirect || "" }]);
+                showFinalResultsScreen("Esercizio Libero", [{ titolo: activeSession.pazienteNome, file: "" }]);
             } else if (isSessionPianificata) {
                 const completati = activeSession.esercizi.slice(0, activeSession.indiceCorrente + 1);
                 showFinalResultsScreen("Sessione Pianificata Interrotta", completati.length > 0 ? completati : [{titolo: "Nessun esercizio completato", file: ""}]);
@@ -372,8 +164,6 @@
                 }
             }
 
-            window.location.href = "esercizi.html";
+            window.location.href = "index.html";
         }
     </script>
-</body>
-</html>
