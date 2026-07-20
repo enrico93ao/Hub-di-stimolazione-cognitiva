@@ -362,9 +362,7 @@
         const FONT_STYLE = "bold 44px Arial";
         const HIT_RADIUS = 38; 
 
-        const canvas = document.getElementById('cancellationCanvas');
-        const ctx = canvas.getContext('2d');
-
+        let canvas, ctx;
         let audioCtx = null;
         let startTime = 0;
         let falsePositives = 0;
@@ -442,6 +440,9 @@
             initAudio();
             resetData();
             
+            canvas = document.getElementById('cancellationCanvas');
+            ctx = canvas.getContext('2d');
+
             areaW = window.innerWidth;
             areaH = window.innerHeight - 80; 
             canvas.width = areaW;
@@ -614,7 +615,7 @@
                         ctx.beginPath(); ctx.moveTo(s.x, s.y - 18); ctx.lineTo(s.x + 18, s.y); ctx.lineTo(s.x, s.y + 18); ctx.lineTo(s.x - 18, s.y); ctx.closePath(); ctx.stroke();
                     }
                     else if (s.name === 'star') {
-                        ctx.beginPath(); ctx.moveTo(s.x - 16, s.y); ctx.lineTo(s.x + 16, s.y); ctx.moveTo(s.x, s.y - 16); ctx.lineTo(s.x, s.y + 16); stroke();
+                        ctx.beginPath(); ctx.moveTo(s.x - 16, s.y); ctx.lineTo(s.x + 16, s.y); ctx.moveTo(s.x, s.y - 16); ctx.lineTo(s.x, s.y + 16); ctx.stroke();
                     }
                     if (s.cancelled) {
                         ctx.strokeStyle = "#adb5bd"; ctx.beginPath(); ctx.moveTo(s.x - 24, s.y + 24); ctx.lineTo(s.x + 24, s.y - 24); ctx.stroke();
@@ -623,32 +624,37 @@
             });
         }
 
-        canvas.addEventListener('click', function(event) {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = (event.clientX - rect.left) * (areaW / rect.width);
-            const mouseY = (event.clientY - rect.top) * (areaH / rect.height);
+        window.addEventListener('load', function() {
+            canvas = document.getElementById('cancellationCanvas');
+            if(canvas) {
+                canvas.addEventListener('click', function(event) {
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = (event.clientX - rect.left) * (areaW / rect.width);
+                    const mouseY = (event.clientY - rect.top) * (areaH / rect.height);
 
-            let clicked = stimuli.find(s => Math.hypot(mouseX - s.x, mouseY - s.y) < HIT_RADIUS);
+                    let clicked = stimuli.find(s => Math.hypot(mouseX - s.x, mouseY - s.y) < HIT_RADIUS);
 
-            if (clicked) {
-                if (useConstraint && clicked.rowIndex !== activeRowIndex) {
-                    playSound('error'); 
-                    return;
-                }
+                    if (clicked) {
+                        if (useConstraint && clicked.rowIndex !== activeRowIndex) {
+                            playSound('error'); 
+                            return;
+                        }
 
-                if (clicked.isTarget) {
-                    if (!clicked.cancelled) {
-                        clicked.cancelled = true;
-                        playSound('correct');
-                        drawCanvas();
-                        checkAutoCompletion();
+                        if (clicked.isTarget) {
+                            if (!clicked.cancelled) {
+                                clicked.cancelled = true;
+                                playSound('correct');
+                                drawCanvas();
+                                checkAutoCompletion();
+                            }
+                        } else {
+                            falsePositives++;
+                            playSound('error');
+                            ctx.fillStyle = "rgba(220, 53, 69, 0.15)"; ctx.beginPath(); ctx.arc(clicked.x, clicked.y, HIT_RADIUS - 5, 0, 2 * Math.PI); ctx.fill();
+                            setTimeout(drawCanvas, 120);
+                        }
                     }
-                } else {
-                    falsePositives++;
-                    playSound('error');
-                    ctx.fillStyle = "rgba(220, 53, 69, 0.15)"; ctx.beginPath(); ctx.arc(clicked.x, clicked.y, HIT_RADIUS - 5, 0, 2 * Math.PI); ctx.fill();
-                    setTimeout(drawCanvas, 120);
-                }
+                });
             }
         });
 
@@ -719,7 +725,7 @@
                 }
             };
 
-            // Esegui salvataggio solo se Firebase è attivo e configurato
+            // Esegui salvataggio se Firebase è attivo e configurato
             if (isSessioneAttiva && pazienteId && database) {
                 const savingStatus = document.getElementById('savingStatus');
                 const btnAction = document.getElementById('btnAction');
@@ -755,7 +761,6 @@
                         .catch(err => handleSalvataggioErrore(err));
                 }
             } else if (isSessioneAttiva) {
-                // Se era richiesta la sessione ma Firebase non è configurato
                 const savingStatus = document.getElementById('savingStatus');
                 savingStatus.style.display = 'block';
                 savingStatus.textContent = "Modalità Offline: Dati non salvati su Firebase.";
@@ -790,7 +795,6 @@
             }
         }
 
-        // Avvio sicuro di Firebase alla sottomissione del DOM
         window.addEventListener('DOMContentLoaded', initFirebaseSafe);
     </script>
 </body>
