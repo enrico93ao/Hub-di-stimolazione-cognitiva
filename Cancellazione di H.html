@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Cancellazione Selettiva Clinica Avanzato</title>
     
-    <!-- Firebase SDK (Compat v8 per massima compatibilità con script esistenti) -->
+    <!-- Firebase SDK (Compat v8) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -82,7 +82,6 @@
             z-index: 30;
         }
 
-        /* Barra di ancoraggio interattiva sul bordo destro */
         .red-cue-bar {
             display: none;
             position: absolute;
@@ -327,24 +326,27 @@
     </div>
 
     <script>
-        // --- CONFIGURAZIONE E SETUP INIZIALE DI FIREBASE ---
-        const firebaseConfig = window.firebaseConfig || JSON.parse(localStorage.getItem('firebaseConfig')) || {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        // Inizializza Firebase se non è già stato inizializzato
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        // --- INIZIALIZZAZIONE PROTETTA DI FIREBASE ---
+        let database = null;
+        
+        function initFirebaseSafe() {
+            try {
+                const config = window.firebaseConfig || JSON.parse(localStorage.getItem('firebaseConfig'));
+                if (config && config.apiKey && config.apiKey !== "YOUR_API_KEY") {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(config);
+                    }
+                    database = firebase.database();
+                    console.log("Firebase collegato correttamente.");
+                } else {
+                    console.warn("Nessuna credenziale valida trovata per Firebase. Il gioco girerà in modalità offline.");
+                }
+            } catch (e) {
+                console.error("Errore durante il caricamento di Firebase:", e);
+            }
         }
-        const database = firebase.database();
 
-        // Parametri di sessione letti dall'URL query string
+        // Parametri URL
         const urlParams = new URLSearchParams(window.location.search);
         const isSessioneAttiva = urlParams.get('sessione') === 'true';
         const pazienteId = urlParams.get('pazienteId');
@@ -377,7 +379,7 @@
         let showLines = false;
         let activeRowIndex = 0; 
 
-        // Gestione abilitazione/disattivazione coerente del vincolo di riga
+        // Gestione checkbox vincolo di riga
         document.getElementById('enable-red-bar').addEventListener('change', function(e) {
             const constraintCheckbox = document.getElementById('enable-row-constraint');
             if(!e.target.checked) {
@@ -612,7 +614,7 @@
                         ctx.beginPath(); ctx.moveTo(s.x, s.y - 18); ctx.lineTo(s.x + 18, s.y); ctx.lineTo(s.x, s.y + 18); ctx.lineTo(s.x - 18, s.y); ctx.closePath(); ctx.stroke();
                     }
                     else if (s.name === 'star') {
-                        ctx.beginPath(); ctx.moveTo(s.x - 16, s.y); ctx.lineTo(s.x + 16, s.y); ctx.moveTo(s.x, s.y - 16); ctx.lineTo(s.x, s.y + 16); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(s.x - 16, s.y); ctx.lineTo(s.x + 16, s.y); ctx.moveTo(s.x, s.y - 16); ctx.lineTo(s.x, s.y + 16); stroke();
                     }
                     if (s.cancelled) {
                         ctx.strokeStyle = "#adb5bd"; ctx.beginPath(); ctx.moveTo(s.x - 24, s.y + 24); ctx.lineTo(s.x + 24, s.y - 24); ctx.stroke();
@@ -669,7 +671,7 @@
             }
         }
 
-        // --- SALVATAGGIO DEI DATI SU FIREBASE CON STRUTTURA STANDARD ---
+        // --- SALVATAGGIO DEI DATI ---
         function endExercise() {
             const tempFine = performance.now();
             const tempoTotaleS = parseFloat(((tempFine - startTime) / 1000).toFixed(1));
@@ -693,10 +695,8 @@
             });
 
             const accuracyPercent = totalTargets > 0 ? Math.round((clickedTargets / totalTargets) * 100) : 0;
-            // Punteggio grezzo bilanciato (punti per corrette penalizzati da errori)
             const punteggioGrezzo = Math.max(0, (clickedTargets * 10) - (falsePositives * 5));
 
-            // Aggiorna interfaccia risultati
             document.getElementById('res-accuracy').textContent = `${clickedTargets} / ${totalTargets} (${accuracyPercent}%)`;
             document.getElementById('res-errors').textContent = `${falsePositives}`;
             document.getElementById('res-time').textContent = `${tempoTotaleS} s`;
@@ -705,24 +705,22 @@
 
             switchScreen('results-screen');
 
-            // Prepara l'oggetto dati con la STRUTTURA STANDARD per Firebase
             const datiEsercizio = {
-                titolo: "Cancellazione Selettiva Clinica", // Corrisponde esattamente al data-title della dashboard principale
+                titolo: "Cancellazione Selettiva Clinica", 
                 risultati: {
                     risposteCorrette: clickedTargets,
                     totaleDomande: totalTargets,
                     percentualeAccuratezza: accuracyPercent,
                     tempoMedioS: tempoTotaleS,
                     punteggio: punteggioGrezzo,
-                    // Metriche cliniche specifiche aggiuntive inserite per lo storico testuale
                     omissioniSinistra: leftOmissions,
                     omissioniDestra: rightOmissions,
                     falsiPositivi: falsePositives
                 }
             };
 
-            // Salva su Firebase se la sessione riabilitativa è attiva
-            if (isSessioneAttiva && pazienteId) {
+            // Esegui salvataggio solo se Firebase è attivo e configurato
+            if (isSessioneAttiva && pazienteId && database) {
                 const savingStatus = document.getElementById('savingStatus');
                 const btnAction = document.getElementById('btnAction');
                 
@@ -730,13 +728,11 @@
                 btnAction.disabled = true;
 
                 if (sessionId) {
-                    // SESSIONE PIANIFICATA: salva nell'indice dell'array dell'esercizio corrente
                     const dbPath = `storico_pazienti/${pazienteId}/sessioni/${sessionId}/eserciziSvolti/${indiceEsercizio}`;
                     database.ref(dbPath).set(datiEsercizio)
                         .then(() => handleSalvataggioSuccesso())
                         .catch(err => handleSalvataggioErrore(err));
                 } else {
-                    // SESSIONE LIBERA: recupera l'ultimo blocco di sessione e aggiungi all'array eserciziSvolti
                     const refSessioni = database.ref(`storico_pazienti/${pazienteId}/sessioni`);
                     refSessioni.limitToLast(1).once('value')
                         .then(snapshot => {
@@ -745,50 +741,48 @@
                                 let lastSessionData = snapshot.val()[lastSessionKey];
                                 let esercizi = lastSessionData.eserciziSvolti || [];
                                 
-                                // Se per qualche motivo esercizi non è un array
                                 if (!Array.isArray(esercizi)) {
                                     esercizi = Object.values(esercizi);
                                 }
                                 
                                 esercizi.push(datiEsercizio);
-
                                 return database.ref(`storico_pazienti/${pazienteId}/sessioni/${lastSessionKey}/eserciziSvolti`).set(esercizi);
                             } else {
-                                throw new Error("Nessuna sessione trovata per questo paziente.");
+                                throw new Error("Nessuna sessione attiva.");
                             }
                         })
                         .then(() => handleSalvataggioSuccesso())
                         .catch(err => handleSalvataggioErrore(err));
                 }
+            } else if (isSessioneAttiva) {
+                // Se era richiesta la sessione ma Firebase non è configurato
+                const savingStatus = document.getElementById('savingStatus');
+                savingStatus.style.display = 'block';
+                savingStatus.textContent = "Modalità Offline: Dati non salvati su Firebase.";
+                savingStatus.style.color = "#ffc107";
             }
         }
 
         function handleSalvataggioSuccesso() {
             const savingStatus = document.getElementById('savingStatus');
             const btnAction = document.getElementById('btnAction');
-            
-            savingStatus.textContent = "Risultati salvati con successo!";
+            savingStatus.textContent = "Risultati salvati correttamente!";
             savingStatus.style.color = "#28a745";
             btnAction.disabled = false;
-            
-            if (isSessioneAttiva) {
-                btnAction.textContent = "Continua Sessione";
-            }
+            if (isSessioneAttiva) btnAction.textContent = "Continua Sessione";
         }
 
         function handleSalvataggioErrore(error) {
-            console.error("Errore nel salvataggio su Firebase:", error);
+            console.error(error);
             const savingStatus = document.getElementById('savingStatus');
             const btnAction = document.getElementById('btnAction');
-            
-            savingStatus.textContent = "Errore durante il salvataggio. Riprova.";
+            savingStatus.textContent = "Errore di salvataggio. Controlla la rete.";
             savingStatus.style.color = "#dc3545";
             btnAction.disabled = false;
         }
 
         function goToDashboard() {
             if (isSessioneAttiva) {
-                // Ritorna all'indice principale passando i parametri di avanzamento sessione
                 const nextIndice = indiceEsercizio + 1;
                 window.location.href = `index.html?sessione=true&pazienteId=${pazienteId}&sessionId=${sessionId || ''}&next=${nextIndice}`;
             } else {
@@ -796,9 +790,8 @@
             }
         }
 
-        function restartExercise() {
-            switchScreen('welcome-screen');
-        }
+        // Avvio sicuro di Firebase alla sottomissione del DOM
+        window.addEventListener('DOMContentLoaded', initFirebaseSafe);
     </script>
 </body>
 </html>
