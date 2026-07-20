@@ -490,7 +490,7 @@
                     <input type="checkbox" class="select-exercise-checkbox" onchange="updateQueue(event)">
                     <div class="card-body">
                         <h3>Cancellazione di H</h3>
-                        <p>Test di sbarramento classico per valutare e potenziare l'attenzione selettiva visiva e l'accuratezza.</p>
+                        <p>Test di sbarramento classico per valutare e potenziare l'attentione selettiva visiva e l'accuratezza.</p>
                     </div>
                     <span class="tag">Attenzione Selettiva</span>
                 </div>
@@ -963,7 +963,7 @@
             return exerciseColors[exerciseTitle];
         }
 
-        // 5. CARICA STORICO COMPLETO E GRAFICO AVANZATO (PARSER CORRETTO)
+        // 5. CARICA STORICO COMPLETO E GRAFICO AVANZATO (PARSER ULTRA-RESILIENTE)
         window.loadPatientHistory = async function() {
             const select = document.getElementById('patient-select');
             const patientId = select.value;
@@ -1000,71 +1000,81 @@
                     const timestampLabel = dateObj.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
                     if (sess.eserciziSvolti) {
-                        sess.eserciziSvolti.forEach(ex => {
+                        const eserciziArray = Array.isArray(sess.eserciziSvolti) ? sess.eserciziSvolti : Object.values(sess.eserciziSvolti);
+
+                        eserciziArray.forEach(ex => {
+                            if (!ex) return;
+
                             const row = document.createElement('tr');
                             
-                            // IDENTIFICAZIONE DINAMICA SORGENTE DATI (Fallback a cascata per intercettare qualsiasi tracciamento)
+                            // ESTRAZIONE INTELLIGENTE: Cerca i dati sia a livello radice sia nel sotto-oggetto (.risultati o .risultato)
                             const r = ex.risultati || ex.risultato || ex;
                             
                             let numericScore = null;
                             let visualResult = "Svolto";
 
-                            // Tipo 1: Risposte corrette su totali
-                            if (r.risposteCorrette !== undefined && r.totaleDomande) {
-                                numericScore = Math.round((Number(r.risposteCorrette) / Number(r.totaleDomande)) * 100);
-                                visualResult = `${r.risposteCorrette}/${r.totaleDomande} corrette (${numericScore}%)`;
-                            } 
-                            // Tipo 2: Accuratezza percentuale esplicita
-                            else if (r.percentualeAccuratezza !== undefined) {
+                            // 1. Controllo Accuratezza Percentuale Esplicita
+                            if (r.percentualeAccuratezza !== undefined && r.percentualeAccuratezza !== null) {
                                 numericScore = Math.round(Number(r.percentualeAccuratezza));
                                 visualResult = `Accuratezza: ${numericScore}%`;
                             }
-                            else if (r.accuratezza !== undefined) {
+                            else if (ex.percentualeAccuratezza !== undefined && ex.percentualeAccuratezza !== null) {
+                                numericScore = Math.round(Number(ex.percentualeAccuratezza));
+                                visualResult = `Accuratezza: ${numericScore}%`;
+                            }
+                            // 2. Controllo accuratezza generica
+                            else if (r.accuratezza !== undefined && r.accuratezza !== null) {
                                 numericScore = Math.round(Number(r.accuratezza));
                                 visualResult = `Accuratezza: ${numericScore}%`;
                             }
-                            // Tipo 3: Punteggio grezzo (se inferiore a 10 lo proietta in decimi su base 100, altrimenti lo usa direttamente)
-                            else if (r.punteggio !== undefined) {
+                            // 3. Controllo Risposte Corrette su Totali
+                            else if (r.risposteCorrette !== undefined && r.totaleDomande) {
+                                numericScore = Math.round((Number(r.risposteCorrette) / Number(r.totaleDomande)) * 100);
+                                visualResult = `${r.risposteCorrette}/${r.totaleDomande} corrette (${numericScore}%)`;
+                            } 
+                            // 4. Controllo Punteggi / Score
+                            else if (r.punteggio !== undefined && r.punteggio !== null) {
                                 const p = Number(r.punteggio);
                                 numericScore = p <= 10 ? Math.min(Math.round(p * 10), 100) : Math.min(p, 100);
                                 visualResult = `Punteggio: ${r.punteggio}`;
                             }
-                            else if (r.score !== undefined) {
+                            else if (r.score !== undefined && r.score !== null) {
                                 const s = Number(r.score);
                                 numericScore = s <= 10 ? Math.min(Math.round(s * 10), 100) : Math.min(s, 100);
                                 visualResult = `Punteggio: ${r.score}`;
                             }
-                            // Tipo 4: Solo tempo impiegato (calcola un indice di performance scalato)
+                            // 5. Solo tempo impiegato
                             else if (r.tempoMedioS !== undefined || r.tempo !== undefined) {
                                 const t = Number(r.tempoMedioS || r.tempo);
-                                numericScore = Math.max(10, Math.round(100 - (t * 4))); // Più è basso il tempo, più il punteggio si avvicina a 100
+                                numericScore = Math.max(10, Math.round(100 - (t * 2))); 
                                 visualResult = `Tempo: ${t}s`;
                             }
 
-                            // Default se non viene trovata alcuna metrica numerica
+                            // Se non trova alcuna metrica numerica coerente, mette 0 invece del fallback fisso a 100
                             if (numericScore === null) {
-                                numericScore = 100;
-                                visualResult = "Svolto";
+                                numericScore = 0; 
+                                visualResult = "Dato N/D";
                             }
 
                             row.innerHTML = `
                                 <td><small>${timestampLabel}</small></td>
-                                <td><strong>${ex.titolo}</strong></td>
+                                <td><strong>${ex.titolo || "Esercizio"}</strong></td>
                                 <td><span class="tag" style="background: #ecfdf5; color: #059669;">${visualResult}</span></td>
                             `;
                             tableBody.appendChild(row);
 
-                            if (!datasetsMap[ex.titolo]) {
-                                datasetsMap[ex.titolo] = {
-                                    label: ex.titolo,
+                            const titoloGrafico = ex.titolo || "Esercizio";
+                            if (!datasetsMap[titoloGrafico]) {
+                                datasetsMap[titoloGrafico] = {
+                                    label: titoloGrafico,
                                     data: [],
-                                    borderColor: getColorForExercise(ex.titolo),
-                                    backgroundColor: getColorForExercise(ex.titolo),
+                                    borderColor: getColorForExercise(titoloGrafico),
+                                    backgroundColor: getColorForExercise(titoloGrafico),
                                     fill: false
                                 };
                             }
                             
-                            datasetsMap[ex.titolo].data.push({
+                            datasetsMap[titoloGrafico].data.push({
                                 x: timestampLabel,
                                 y: numericScore
                             });
