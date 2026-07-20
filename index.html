@@ -47,7 +47,7 @@
         header {
             background: var(--primary-gradient);
             color: white;
-            padding: 60px 20px;
+            padding: 70px 20px 90px 20px;
             text-align: center;
             position: relative;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
@@ -69,31 +69,87 @@
         }
 
         header p {
-            margin-top: 12px;
-            font-size: 1.2rem;
-            color: #bae6fd;
+            margin-top: 14px;
+            font-size: 1.25rem;
+            color: #e0f2fe;
             font-weight: 400;
-            max-width: 600px;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
+            line-height: 1.5;
         }
 
         .container {
             max-width: 1440px;
-            margin: -30px auto 0 auto;
+            margin: -50px auto 0 auto;
             padding: 0 24px;
             position: relative;
             z-index: 10;
         }
 
+        /* --- SEZIONE METRICHE / KPI --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .stat-info h4 {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 1.6rem;
+            font-weight: 750;
+            color: var(--slate-900);
+        }
+
+        /* Colori Icone KPI */
+        .stat-pazienti .stat-icon { background: #e0f2fe; color: #0284c7; }
+        .stat-esercizi .stat-icon { background: #e0e7ff; color: #4f46e5; }
+        .stat-accuratezza .stat-icon { background: #d1fae5; color: #059669; }
+        .stat-tempo .stat-icon { background: #fef3c7; color: #d97706; }
+
         /* --- PANNELLO CLINICO ANIMATO --- */
         #clinical-panel {
             background: #ffffff;
-            border: 1px solid rgba(59, 131, 246, 0.2);
+            border: 1px solid rgba(59, 131, 246, 0.15);
             border-radius: 24px;
             padding: 30px;
             margin-bottom: 45px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-md);
             transition: var(--transition);
         }
 
@@ -122,9 +178,8 @@
             color: var(--slate-700);
         }
 
-        /* Wrapper animato per apertura/chiusura */
         .panel-content-wrapper {
-            max-height: 2000px; /* Valore alto per permettere l'espansione */
+            max-height: 2000px;
             opacity: 1;
             overflow: hidden;
             transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
@@ -184,7 +239,6 @@
             outline: none;
             background: white;
             transition: var(--transition);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
         }
 
         input[type="text"] { flex-grow: 1; }
@@ -193,7 +247,7 @@
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
         }
 
-        /* --- CALL TO ACTIONS & BUTTONS PREMIUM --- */
+        /* --- BUTTONS PREMIUM --- */
         .btn {
             background: var(--primary-light);
             color: white;
@@ -208,31 +262,25 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
 
         .btn:hover {
             background: var(--primary);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(30, 58, 138, 0.3);
+            box-shadow: 0 6px 16px rgba(30, 58, 138, 0.25);
         }
 
         .btn:active { transform: translateY(0); }
-
-        .btn-success { background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-        .btn-success:hover { background: var(--success-hover); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3); }
-
-        .btn-warning { background: var(--warning); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2); }
-        .btn-warning:hover { background: var(--warning-hover); box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3); }
-
-        .btn-danger { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
-        .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3); }
-        
+        .btn-success { background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+        .btn-success:hover { background: var(--success-hover); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.25); }
+        .btn-warning { background: var(--warning); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15); }
+        .btn-warning:hover { background: var(--warning-hover); box-shadow: 0 6px 16px rgba(217, 119, 6, 0.25); }
+        .btn-danger { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
+        .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25); }
         .btn-sm { padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; }
 
-        /* Stato della sessione attiva (Pulse effect) */
+        /* Pulse effect status bar */
         #active-status-bar {
             grid-column: 1 / -1;
             background: #ecfdf5;
@@ -244,7 +292,6 @@
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-            box-shadow: var(--shadow-sm);
             animation: pulseGlow 2.5s infinite ease-in-out;
         }
 
@@ -264,7 +311,6 @@
             border: 1px dashed var(--slate-200);
         }
 
-        /* --- SEZIONE GESTIONE ANAGRAFICA --- */
         .patient-mgmt-container {
             margin-top: 15px;
             max-height: 200px;
@@ -324,7 +370,6 @@
             min-height: 400px;
             height: 420px;
             position: relative;
-            box-shadow: var(--shadow-sm);
         }
 
         .table-container {
@@ -333,7 +378,6 @@
             border: 1px solid var(--slate-200);
             border-radius: 16px;
             background: white;
-            box-shadow: var(--shadow-sm);
         }
 
         .report-table {
@@ -357,12 +401,7 @@
             z-index: 20;
         }
 
-        .report-table tbody tr {
-            transition: var(--transition);
-        }
-        .report-table tbody tr:hover {
-            background: var(--slate-50);
-        }
+        .report-table tbody tr:hover { background: var(--slate-50); }
 
         /* --- GRIGLIA E CARD ESERCIZI PREMIUM --- */
         .area-sezione {
@@ -373,10 +412,6 @@
             box-shadow: var(--shadow-md);
             border: 1px solid rgba(226, 232, 240, 0.8);
             transition: var(--transition);
-        }
-        
-        .area-sezione:hover {
-            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.04);
         }
 
         .area-header {
@@ -394,9 +429,9 @@
             padding: 12px;
             border-radius: 14px;
         }
-        .area-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--slate-900); letter-spacing: -0.3px; }
+        .area-header h2 { font-size: 1.5rem; font-weight: 700; color: var(--slate-900); }
 
-        /* Temi cromatici icone delle Aree */
+        /* Colori Aree */
         .area-attenzione .area-header i { color: #ef4444; background: #fee2e2; }
         .area-memoria .area-header i { color: #3b82f6; background: #dbeafe; }
         .area-funzioni .area-header i { color: #10b981; background: #d1fae5; }
@@ -410,7 +445,6 @@
             gap: 26px;
         }
 
-        /* Card Esercizio */
         .card {
             background: var(--slate-50);
             border-radius: 20px;
@@ -433,10 +467,9 @@
         }
 
         .card-body { flex-grow: 1; margin-bottom: 20px; padding-right: 20px; }
-        .card h3 { font-size: 1.2rem; color: var(--slate-900); font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+        .card h3 { font-size: 1.2rem; color: var(--slate-900); font-weight: 700; margin-bottom: 10px; }
         .card p { font-size: 0.9rem; color: #64748b; line-height: 1.6; }
 
-        /* Checkbox stilizzata fluttuante */
         .select-exercise-checkbox {
             position: absolute;
             top: 24px;
@@ -446,7 +479,6 @@
             cursor: pointer;
             z-index: 5;
             accent-color: var(--primary-light);
-            border-radius: 6px;
         }
 
         .tag {
@@ -456,29 +488,23 @@
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             border-radius: 10px;
             background: var(--slate-200);
             color: var(--slate-700);
             transition: var(--transition);
         }
 
-        /* Hover Dinamici Premium basati sull'area */
+        /* Hover Dinamici per Area */
         .area-attenzione .card:hover { border-color: rgba(239, 68, 68, 0.4); }
         .area-attenzione .card:hover .tag { background: #fee2e2; color: #ef4444; }
-        
         .area-memoria .card:hover { border-color: rgba(59, 130, 246, 0.4); }
         .area-memoria .card:hover .tag { background: #dbeafe; color: #3b82f6; }
-        
         .area-funzioni .card:hover { border-color: rgba(16, 185, 129, 0.4); }
         .area-funzioni .card:hover .tag { background: #d1fae5; color: #10b981; }
-        
         .area-linguaggio .card:hover { border-color: rgba(245, 158, 11, 0.4); }
         .area-linguaggio .card:hover .tag { background: #fef3c7; color: #d97706; }
-        
         .area-visuo .card:hover { border-color: rgba(139, 92, 246, 0.4); }
         .area-visuo .card:hover .tag { background: #ede9fe; color: #8b5cf6; }
-        
         .area-orientamento .card:hover { border-color: rgba(6, 182, 212, 0.4); }
         .area-orientamento .card:hover .tag { background: #ecfeff; color: #0891b2; }
     </style>
@@ -487,10 +513,42 @@
 
     <header>
         <h1>Hub di Stimolazione Cognitiva</h1>
-        <p>Piattaforma clinica d'avanguardia per la riabilitazione neuropsicologica.</p>
+        <p>Una palestra digitale per la mente: esercizi interattivi e monitoraggio dei progressi per la riabilitazione cognitiva.</p>
     </header>
 
     <div class="container">
+
+        <!-- --- SEZIONE METRICHE / KPI --- -->
+        <div class="stats-grid">
+            <div class="stat-card stat-pazienti">
+                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-info">
+                    <h4>Pazienti In Archivio</h4>
+                    <p id="kpi-patients-count">0</p>
+                </div>
+            </div>
+            <div class="stat-card stat-esercizi">
+                <div class="stat-icon"><i class="fa-solid fa-brain"></i></div>
+                <div class="stat-info">
+                    <h4>Esercizi Disponibili</h4>
+                    <p>30</p>
+                </div>
+            </div>
+            <div class="stat-card stat-accuratezza">
+                <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+                <div class="stat-info">
+                    <h4>Target Accuratezza</h4>
+                    <p>85%</p>
+                </div>
+            </div>
+            <div class="stat-card stat-tempo">
+                <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-info">
+                    <h4>Sessione Consigliata</h4>
+                    <p>45m</p>
+                </div>
+            </div>
+        </div>
 
         <!-- --- PANNELLO CLINICO DI GESTIONE --- -->
         <div id="clinical-panel">
@@ -499,10 +557,8 @@
                 <i id="panel-chevron" class="fa-solid fa-chevron-up"></i>
             </div>
             
-            <!-- Contenitore Animato -->
             <div id="panel-content-wrapper" class="panel-content-wrapper">
                 <div id="panel-content">
-                    <!-- Banner Stato Sessione Attiva -->
                     <div id="active-status-bar">
                         <div>
                             <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 8px;"></i> 
@@ -511,7 +567,6 @@
                         <button class="btn btn-danger btn-sm" onclick="stopCurrentActiveSession()">Termina Sessione</button>
                     </div>
 
-                    <!-- Sezione Creazione/Gestione Paziente -->
                     <div class="clinical-box">
                         <h3><i class="fa-solid fa-user-gear" style="color: var(--primary-light);"></i> Registrazione e Anagrafica</h3>
                         <div class="input-group">
@@ -527,14 +582,11 @@
                                         <th style="width: 120px; text-align: center;">Azioni</th>
                                     </tr>
                                 </thead>
-                                <tbody id="patient-mgmt-list">
-                                    <!-- Popolato dinamicamente -->
-                                </tbody>
+                                <tbody id="patient-mgmt-list"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Sezione Avvio Sessione -->
                     <div class="clinical-box">
                         <h3><i class="fa-solid fa-play" style="color: var(--success);"></i> Configurazione Attività</h3>
                         <div class="input-group">
@@ -555,7 +607,6 @@
                         <div id="queue-list">Nessun esercizio in coda. Spunta i quadratini sulle card per creare una pianificazione automatica.</div>
                     </div>
 
-                    <!-- DOSSIER CLINICO: Grafico e Storico -->
                     <div id="patient-report-section">
                         <h3 style="color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 10px; margin-bottom: 10px;">
                             <i class="fa-solid fa-chart-line"></i> Dossier Clinico: <span id="report-patient-name">Seleziona un paziente</span>
@@ -584,11 +635,9 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
-
 
         <!-- --- LISTA AREE COGNITIVE ED ESERCIZI --- -->
         <!-- 1. ATTENZIONE E CONCENTRAZIONE -->
@@ -696,7 +745,7 @@
                     </div>
                     <span class="tag">Richiamo Visivo</span>
                 </div>
-                <div class="card" data-title="Memoria visuospaziale con numeri" data-file="Memoria%20visuospaziale%20con%20numeri.html" onclick="openExerciseCard(this, event)">
+                <div class="card" data-title="Memoria visuospaziale con numeri" data-file="Memoria%20visuospaziale%20con%20numbers.html" onclick="openExerciseCard(this, event)">
                     <input type="checkbox" class="select-exercise-checkbox" onchange="updateQueue(event)">
                     <div class="card-body">
                         <h3>Memoria Visuospaziale con Numeri</h3>
@@ -1030,6 +1079,7 @@
         onValue(patientsRef, (snapshot) => {
             const select = document.getElementById('patient-select');
             const mgmtList = document.getElementById('patient-mgmt-list');
+            const kpiCount = document.getElementById('kpi-patients-count');
             const currentSelected = select.value;
 
             select.innerHTML = '<option value="">-- Seleziona Paziente --</option>';
@@ -1037,7 +1087,9 @@
             
             if (snapshot.exists()) {
                 const data = snapshot.val();
+                let count = 0;
                 for (let id in data) {
+                    count++;
                     const pName = data[id].nome;
 
                     const opt = document.createElement('option');
@@ -1055,11 +1107,13 @@
                     `;
                     mgmtList.appendChild(row);
                 }
+                kpiCount.textContent = count;
                 if (currentSelected && data[currentSelected]) {
                     select.value = currentSelected;
                 }
             } else {
                 mgmtList.innerHTML = `<tr><td colspan="2" style="text-align: center; color: #94a3b8; padding: 10px;">Nessun paziente registrato.</td></tr>`;
+                kpiCount.textContent = "0";
             }
         });
 
@@ -1226,7 +1280,6 @@
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
                     pointHoverBorderWidth: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.1)',
                 };
             });
 
