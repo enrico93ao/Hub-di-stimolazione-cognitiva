@@ -1,725 +1,1548 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Memoria Visiva - Allenamento Cognitivo</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    @keyframes spin-slow {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .animate-spin-slow {
-      animation: spin-slow 8s linear infinite;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroTrain - Riabilitazione Neuropsicologica</title>
+    <!-- Tailwind CSS for modern, clean UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind Config for custom medical theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clinical: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-neutral-50 p-4 md:p-8 flex flex-col items-center font-sans text-slate-900 transition-all duration-500">
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col justify-between">
 
-  <div class="max-w-4xl w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
-    
     <!-- Header -->
-    <header class="bg-indigo-600 p-8 text-white text-center relative overflow-hidden">
-      <div class="absolute -top-10 -right-10 opacity-10 rotate-12 pointer-events-none">
-        <i data-lucide="brain-circuit" class="w-32 h-32"></i>
-      </div>
-      <h1 class="text-3xl font-black tracking-tight">MEMORIA FOCUS v2.4</h1>
-      <p class="text-indigo-200 font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Semplificato & Calibrato</p>
+    <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-sm">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-clinical-600 text-white p-2 rounded-lg shadow-md shadow-clinical-600/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">NeuroTrain v2.2</h1>
+                    <p class="text-xs text-slate-500 font-medium">Software Clinico di Stimolazione Cognitiva</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Home Button (Back to difficulty selection or clinical dashboard) -->
+                <button id="btn-home" onclick="goHome()" class="hidden text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-lg transition duration-150 flex items-center space-x-1 border border-slate-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-clinical-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span id="btn-home-label">Home</span>
+                </button>
+                <div class="text-xs px-3 py-1.5 bg-slate-100 rounded-full text-slate-600 font-semibold uppercase tracking-wider hidden sm:block">
+                    Modulo: Memoria Visuo-Spaziale & Attenzione
+                </div>
+            </div>
+        </div>
     </header>
 
-    <!-- SCHERMATA: INTRO -->
-    <section id="phase-intro" class="p-8 md:p-12 animate-in fade-in duration-500">
-      <div class="text-center mb-10">
-        <div class="mb-6 flex justify-center text-indigo-600 bg-indigo-50 w-24 h-24 items-center rounded-[2rem] mx-auto shadow-inner border border-indigo-100/50">
-          <i data-lucide="brain" class="w-12 h-12"></i>
-        </div>
-        <h2 class="text-3xl font-black mb-3 text-slate-900 tracking-tight">Pronto alla sfida?</h2>
-        <p class="text-slate-500 max-w-sm mx-auto font-medium">Allena la tua memoria visiva con scene calibrate e compiti di interferenza cognitiva.</p>
-      </div>
-
-      <div class="max-w-md mx-auto space-y-6">
-        <!-- Difficoltà Quiz -->
-        <div class="space-y-4">
-          <div class="flex items-center gap-2 mb-2 ml-2">
-            <i data-lucide="help-circle" class="w-4 h-4 text-indigo-500"></i>
-            <span class="font-black text-slate-400 uppercase text-[10px] tracking-widest">Difficoltà Quiz</span>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <button id="btn-quiz-base" onclick="setQuizDifficulty('base')" class="py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all">
-              Base
-            </button>
-            <button id="btn-quiz-avanzato" onclick="setQuizDifficulty('avanzato')" class="py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all">
-              Avanzato
-            </button>
-          </div>
-        </div>
-
-        <!-- Distrazione -->
-        <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="p-3 bg-white rounded-2xl text-indigo-500 shadow-sm">
-                <i data-lucide="settings-2" class="w-5 h-5"></i>
-              </div>
-              <div>
-                <span class="block font-black text-slate-800 uppercase text-[10px] tracking-widest">Task Distraente</span>
-                <span class="text-[10px] text-slate-400 font-bold">Interferenza post-studio</span>
-              </div>
+    <!-- Main Content Area -->
+    <main class="max-w-3xl mx-auto w-full my-8 p-4 flex-grow">
+        
+        <!-- STEP 1: DIFFICULTY SELECTION -->
+        <div id="step-difficulty" class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+            <div class="text-center mb-8">
+                <span class="text-clinical-600 font-bold text-sm tracking-wider uppercase bg-clinical-50 px-3 py-1 rounded-full">Fase 1</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Seleziona il Livello di Carico Cognitivo</h2>
+                <p class="text-slate-500 text-sm max-w-lg mx-auto">Scegli la complessità degli stimoli visivi. L'esercizio allenerà la tua abilità di codifica rapida e la ritenzione spaziale a breve termine.</p>
             </div>
-            <button id="toggle-distraction" onclick="toggleDistraction()" class="relative inline-flex h-8 w-14 items-center rounded-full transition-all bg-indigo-600">
-              <span id="toggle-handle" class="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform translate-x-7"></span>
-            </button>
-          </div>
 
-          <div id="distraction-diff-container" class="grid grid-cols-2 gap-4 transition-all">
-            <button id="btn-distract-base" onclick="setDistractDifficulty('base')" class="py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 transition-all">
-              Base (Calcoli)
-            </button>
-            <button id="btn-distract-avanzato" onclick="setDistractDifficulty('avanzato')" class="py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 transition-all">
-              Avanzato (+Parole)
-            </button>
-          </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Facile -->
+                <button onclick="selectDifficulty('facile')" class="flex flex-col text-left p-6 rounded-xl border-2 border-slate-100 hover:border-clinical-600 hover:bg-clinical-50/20 transition-all duration-200 group">
+                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4 font-bold">A</div>
+                    <h3 class="font-bold text-lg text-slate-900 mb-1 group-hover:text-clinical-700">FACILE</h3>
+                    <p class="text-xs text-slate-500 flex-grow mb-4">Pochi elementi geometrici ben distinti, colori vivaci e contrastanti, sfondo completamente neutro.</p>
+                    <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Tempo: 30s</span>
+                </button>
+
+                <!-- Medio -->
+                <button onclick="selectDifficulty('medio')" class="flex flex-col text-left p-6 rounded-xl border-2 border-slate-100 hover:border-clinical-600 hover:bg-clinical-50/20 transition-all duration-200 group">
+                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4 font-bold">B</div>
+                    <h3 class="font-bold text-lg text-slate-900 mb-1 group-hover:text-clinical-700">MEDIO</h3>
+                    <p class="text-xs text-slate-500 flex-grow mb-4">Scena di vita quotidiana (es. una scrivania) con diversi oggetti comuni e dettagli moderati.</p>
+                    <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded">Tempo: 20s</span>
+                </button>
+
+                <!-- Difficile -->
+                <button onclick="selectDifficulty('difficile')" class="flex flex-col text-left p-6 rounded-xl border-2 border-slate-100 hover:border-clinical-600 hover:bg-clinical-50/20 transition-all duration-200 group">
+                    <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4 font-bold">C</div>
+                    <h3 class="font-bold text-lg text-slate-900 mb-1 group-hover:text-clinical-700">DIFFICILE</h3>
+                    <p class="text-xs text-slate-500 flex-grow mb-4">Scena complessa e affollata (studio disordinato), ricca di dettagli sovrapposti, scritte e distrazioni.</p>
+                    <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-1 rounded">Tempo: 10s</span>
+                </button>
+            </div>
         </div>
 
-        <button onclick="startExercise()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-6 rounded-[2rem] shadow-2xl shadow-indigo-200 transition-all transform hover:scale-[1.02] active:scale-95 text-xl uppercase tracking-widest flex items-center justify-center gap-4">
-          Inizia Esercizio <i data-lucide="image" class="w-6 h-6"></i>
-        </button>
-      </div>
-    </section>
+        <!-- STEP 2: STIMULUS DISPLAY & OBSERVATION -->
+        <div id="step-observation" class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100 hidden">
+            <div class="text-center mb-6">
+                <span class="text-clinical-600 font-bold text-sm tracking-wider uppercase bg-clinical-50 px-3 py-1 rounded-full">Fase 2</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Osserva lo Stimolo Visivo</h2>
+                <p class="text-slate-500 text-sm">Memorizza quanti più dettagli possibili: forme, posizioni, colori, testi e relazioni spaziali.</p>
+            </div>
 
-    <!-- SCHERMATA: LOADING -->
-    <section id="phase-loading" class="hidden p-16 md:p-24 text-center animate-in fade-in duration-500">
-      <div class="relative mb-12">
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div class="w-48 h-48 bg-indigo-50 rounded-full animate-ping opacity-20"></div>
-        </div>
-        <i data-lucide="loader-2" class="w-20 h-20 text-indigo-600 animate-spin mx-auto relative z-10"></i>
-      </div>
-      
-      <div class="max-w-sm mx-auto mb-8">
-        <div class="flex justify-between items-end mb-3 px-2">
-          <span class="text-[11px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
-            <i data-lucide="sparkles" class="w-3 h-3"></i> Elaborazione IA
-          </span>
-          <span id="loading-percent" class="text-3xl font-black text-slate-900 tabular-nums">0%</span>
-        </div>
-        <div class="h-4 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-1 shadow-inner">
-          <div id="loading-bar" class="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all duration-300 shadow-sm" style="width: 0%"></div>
-        </div>
-      </div>
+            <!-- Timer and Control bar -->
+            <div class="flex items-center justify-between mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="flex items-center space-x-3">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span class="text-sm font-semibold text-slate-700">Tempo di osservazione residuo:</span>
+                </div>
+                <div id="timer-display" class="text-3xl font-mono font-black text-slate-900 tracking-tight">00s</div>
+            </div>
 
-      <h2 id="loading-message" class="text-xl font-black text-slate-800 mb-2 min-h-[3rem] px-8 leading-tight">
-        Inizializzazione test...
-      </h2>
-    </section>
+            <!-- Dynamic SVG Container for Stimuli -->
+            <div id="canvas-container" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 flex items-center justify-center min-h-[380px] relative overflow-hidden shadow-inner">
+                <!-- SVG dynamically generated here -->
+            </div>
 
-    <!-- SCHERMATA: STUDY -->
-    <section id="phase-study" class="hidden p-8 flex flex-col items-center animate-in fade-in duration-700">
-      <div class="w-full flex justify-between items-center mb-6 bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-        <div class="flex items-center gap-2 text-indigo-700 font-black uppercase tracking-widest text-xs">
-          <i data-lucide="eye" class="animate-pulse"></i> Osserva con attenzione
-        </div>
-        <div class="flex items-center gap-3 bg-white text-indigo-700 px-6 py-2 rounded-xl shadow-sm border border-indigo-100 font-mono text-2xl font-black">
-          <i data-lucide="timer" class="text-indigo-500 w-5 h-5"></i> <span id="study-timer">35s</span>
-        </div>
-      </div>
-      
-      <div class="rounded-[2rem] overflow-hidden border-[12px] border-white shadow-2xl bg-slate-100 max-h-[50vh] flex justify-center">
-        <img id="study-image" src="" alt="Scena da memorizzare" class="max-h-[48vh] w-auto object-contain block">
-      </div>
-      
-      <button onclick="skipStudy()" class="mt-8 font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase text-sm tracking-widest">
-        Ho memorizzato tutto →
-      </button>
-    </section>
+            <div class="mt-8 bg-clinical-50/50 p-4 rounded-xl border border-clinical-100 flex items-start space-x-3">
+                <div class="text-clinical-600 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                        <strong class="text-slate-900">Nota clinica:</strong> Osserva attentamente l'immagine. Quando il tempo è scaduto o ti senti pronto prima del tempo, clicca sul pulsante sottostante per passare alle domande (l'immagine verrà oscurata permanentemente).
+                    </p>
+                </div>
+            </div>
 
-    <!-- SCHERMATA: DISTRACT -->
-    <section id="phase-distract" class="hidden p-12 text-center flex flex-col items-center animate-in slide-in-from-bottom duration-500">
-      <div class="mb-6 p-6 bg-white rounded-full shadow-lg text-rose-500">
-        <i data-lucide="brain-circuit" class="w-12 h-12 animate-pulse"></i>
-      </div>
-      <h2 class="text-2xl font-black text-slate-900 mb-8 uppercase tracking-tighter">Compito Distraente</h2>
-      
-      <div class="flex items-center gap-4 mb-10 bg-rose-50 text-rose-700 px-8 py-2 rounded-2xl border border-rose-100">
-        <i data-lucide="timer" class="w-6 h-6"></i>
-        <span id="distract-timer" class="font-mono text-3xl font-black">25s</span>
-      </div>
-
-      <div class="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col items-center gap-6 w-full max-w-md">
-        <!-- Math Task Area -->
-        <div id="distract-math" class="hidden text-6xl font-black text-slate-800 tracking-tighter">
-          <span id="math-a">0</span> <span class="text-indigo-500">+</span> <span id="math-b">0</span>
-        </div>
-        <!-- Word Task Area -->
-        <div id="distract-word" class="hidden">
-          <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] block mb-3">Scrivi al contrario:</span>
-          <div id="word-to-reverse" class="text-5xl font-black text-slate-800 tracking-tight break-all uppercase">PAROLA</div>
-          <div id="word-badge" class="hidden mt-3 text-[9px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full inline-block uppercase">Parola Lunga</div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="goToQuiz()" class="px-8 py-3.5 bg-clinical-600 text-white font-semibold rounded-xl shadow-md shadow-clinical-600/20 hover:bg-clinical-700 transition duration-150 transform active:scale-95 text-sm uppercase tracking-wider flex items-center space-x-2">
+                    <span>Sono Pronto!</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
-        <input 
-          type="text" 
-          id="distract-input"
-          oninput="onDistractInput(this.value)"
-          class="w-full p-5 text-center text-4xl font-black bg-slate-50 border-b-8 border-slate-200 focus:border-indigo-500 outline-none rounded-2xl uppercase transition-all"
-          placeholder="..."
-          autocomplete="off"
-        >
-      </div>
-    </section>
+        <!-- STEP 3: THE QUIZ -->
+        <div id="step-quiz" class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100 hidden">
+            <div class="text-center mb-8 border-b border-slate-100 pb-6">
+                <span class="text-clinical-600 font-bold text-sm tracking-wider uppercase bg-clinical-50 px-3 py-1 rounded-full">Fase 3</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Verifica del Richiamo Visivo</h2>
+                <p class="text-slate-500 text-sm">L'immagine è stata nascosta. Rispondi alle domande basandoti sulla tua traccia mnemonica.</p>
+                
+                <!-- Progress bar -->
+                <div class="w-full bg-slate-100 h-2 rounded-full mt-6 overflow-hidden">
+                    <div id="quiz-progress-bar" class="bg-clinical-600 h-full transition-all duration-300" style="width: 20%;"></div>
+                </div>
+                <div class="flex justify-between items-center mt-2 text-xs text-slate-500 font-semibold">
+                    <span>Avanzamento test</span>
+                    <span id="quiz-progress-text">Domanda 1 di 3</span>
+                </div>
+            </div>
 
-    <!-- SCHERMATA: QUIZ -->
-    <section id="phase-quiz" class="hidden p-8 md:p-12 animate-in fade-in duration-500">
-      <div class="mb-10 border-b-2 border-slate-100 pb-6 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-          <div class="p-3 bg-indigo-600 text-white rounded-2xl">
-            <i data-lucide="help-circle" class="w-6 h-6"></i>
-          </div>
-          <h2 class="text-3xl font-black">Rievocazione</h2>
+            <!-- Single Question Container -->
+            <div class="mb-8">
+                <div class="flex items-start space-x-4 mb-6">
+                    <div class="bg-clinical-50 text-clinical-600 font-bold text-lg rounded-xl w-10 h-10 flex items-center justify-center border border-clinical-100 shrink-0" id="question-number">
+                        Q
+                    </div>
+                    <h3 id="question-text" class="text-lg font-bold text-slate-800 pt-1.5">
+                        Testo della domanda?
+                    </h3>
+                </div>
+
+                <!-- Multiple choice options -->
+                <div class="grid gap-3" id="options-container">
+                    <!-- Buttons dynamic insertion -->
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-slate-100">
+                <button id="next-btn" onclick="submitAnswer()" disabled class="px-6 py-3 bg-slate-200 text-slate-500 font-semibold rounded-xl cursor-not-allowed transition duration-150 flex items-center space-x-2 text-sm uppercase tracking-wider">
+                    <span>Avanti</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
         </div>
-      </div>
-      
-      <div id="quiz-questions-container" class="space-y-10">
-        <!-- Generato Dinamicamente -->
-      </div>
 
-      <button id="btn-submit-quiz" onclick="finishQuiz()" class="mt-12 w-full bg-slate-900 text-white font-black py-7 rounded-[2rem] text-xl uppercase tracking-widest disabled:opacity-30 transition-all">
-        Verifica Risposte
-      </button>
-    </section>
+        <!-- STEP 4: EVALUATION & FEEDBACK -->
+        <div id="step-results" class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100 hidden">
+            <div class="text-center mb-8">
+                <span class="text-clinical-600 font-bold text-sm tracking-wider uppercase bg-clinical-50 px-3 py-1 rounded-full">Fase 4</span>
+                <h2 class="text-2xl font-bold text-slate-900 mt-3 mb-2">Profilo di Risposta Clinico</h2>
+                <p class="text-slate-500 text-sm">Resoconto dettagliato del tasso di accuratezza e dei domini cognitivi stimolati.</p>
+            </div>
 
-    <!-- SCHERMATA: RESULT -->
-    <section id="phase-result" class="hidden p-8 md:p-12 animate-in zoom-in duration-500">
-      <div class="text-center mb-10">
-        <div id="result-icon-container" class="mb-8 inline-flex p-8 rounded-[3rem] shadow-xl">
-          <i id="result-icon" class="w-20 h-20"></i>
+            <!-- Score Circular Visualization -->
+            <div class="flex flex-col items-center justify-center mb-8">
+                <div class="relative flex items-center justify-center">
+                    <!-- SVG Circle Progress -->
+                    <svg class="w-40 h-40 transform -rotate-90">
+                        <circle cx="80" cy="80" r="70" class="stroke-slate-100 fill-none" stroke-width="12"></circle>
+                        <circle id="score-circle" cx="80" cy="80" r="70" class="stroke-clinical-600 fill-none transition-all duration-1000" stroke-width="12" stroke-dasharray="440" stroke-dashoffset="440"></circle>
+                    </svg>
+                    <div class="absolute text-center">
+                        <span id="score-text" class="text-4xl font-black text-slate-900">0/0</span>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Accuratezza</p>
+                    </div>
+                </div>
+                <div id="clinical-rating" class="mt-4 px-4 py-1.5 bg-slate-100 rounded-full text-slate-700 text-sm font-bold">
+                    Classificazione: --
+                </div>
+            </div>
+
+            <!-- Neuro Report Card -->
+            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8">
+                <h4 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-4 flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-clinical-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Analisi dei Domini Cognitivi</span>
+                </h4>
+                <div class="space-y-4">
+                    <!-- Attenzione Selettiva -->
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-600 font-semibold mb-1">
+                            <span>Attenzione Selettiva e Focalizzata</span>
+                            <span id="domain-attention-pct">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div id="domain-attention" class="bg-clinical-600 h-full transition-all duration-500" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <!-- Memoria Visuo-Spaziale -->
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-600 font-semibold mb-1">
+                            <span>Memoria di Lavoro Visuo-Spaziale</span>
+                            <span id="domain-spatial-pct">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div id="domain-spatial" class="bg-cyan-500 h-full transition-all duration-500" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <!-- Velocità di Elaborazione -->
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-600 font-semibold mb-1">
+                            <span>Carico ed Elaborazione Sequenziale</span>
+                            <span id="domain-processing-pct">100%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div id="domain-processing" class="bg-indigo-500 h-full transition-all duration-500" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-slate-200 pt-4">
+                    <p id="neuropsych-feedback-text" class="text-xs text-slate-600 italic leading-relaxed">
+                        --
+                    </p>
+                </div>
+            </div>
+
+            <!-- Correct Answers Accordion -->
+            <div class="mb-8">
+                <h4 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-3">Raffronto Risposte Corrette</h4>
+                <div id="feedback-answers-container" class="space-y-2">
+                    <!-- Generated Dynamically -->
+                </div>
+            </div>
+
+            <!-- Play again options / Dashboard Sinc -->
+            <div id="results-actions" class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="restartGame(true)" class="px-6 py-3.5 bg-clinical-600 text-white font-semibold rounded-xl shadow-md hover:bg-clinical-700 transition duration-150 text-sm uppercase tracking-wider text-center">
+                    Ripeti Stessa Difficoltà
+                </button>
+                <button onclick="restartGame(false)" class="px-6 py-3.5 bg-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-300 transition duration-150 text-sm uppercase tracking-wider text-center">
+                    Cambia Difficoltà
+                </button>
+            </div>
         </div>
-        <div id="result-score" class="text-7xl font-black mb-4 tracking-tighter text-indigo-600">0 / 5</div>
-        <p id="result-text" class="text-slate-500 font-bold text-lg">Ottimo lavoro!</p>
-      </div>
 
-      <!-- Riepilogo Performance -->
-      <div class="bg-slate-50 rounded-[2rem] p-6 md:p-8 mb-10 border border-slate-200">
-        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
-          <i data-lucide="check-circle" class="w-4 h-4"></i> Riepilogo Risposte
-        </h3>
-        
-        <div id="result-summary-container" class="space-y-6">
-          <!-- Popolato via JS -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-100 border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-500">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
+            <span>Sviluppato secondo i protocolli neuropsicologici clinici standardizzati di valutazione ed enhancement cognitivo.</span>
+            <span class="font-semibold text-slate-600">&copy; 2026 NeuroTrain Labs. Tutti i diritti riservati.</span>
         </div>
-      </div>
-      
-      <div class="flex flex-col md:flex-row gap-4 justify-center">
-        <button onclick="openImageModal()" class="px-10 py-5 bg-white border-2 border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
-          <i data-lucide="image" class="w-5 h-5"></i> Rivedi Immagine
-        </button>
-        <button onclick="resetExercise()" class="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">
-          <i data-lucide="rotate-ccw" class="w-5 h-5"></i> Nuovo Test
-        </button>
-      </div>
-    </section>
+    </footer>
 
-  </div>
-
-  <!-- MODAL: IMAGE REVISION -->
-  <div id="image-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-300">
-    <div class="relative max-w-4xl w-full bg-white rounded-[2.5rem] overflow-hidden p-3 border-8 border-white">
-      <button onclick="closeImageModal()" class="absolute top-6 right-6 p-3 bg-slate-100 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-all z-10">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-      <img id="modal-image" src="" alt="Revisione Scena" class="w-full h-auto max-h-[80vh] object-contain rounded-2xl">
+    <!-- Saving & Synchronizing Backdrop Loader -->
+    <div id="saving-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
+        <div class="bg-white text-slate-900 p-8 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-center flex flex-col items-center">
+            <svg class="animate-spin h-12 w-12 text-clinical-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <h3 class="text-xl font-bold mb-2">Salvataggio dati...</h3>
+            <p class="text-sm text-slate-500 mb-4">Sincronizzazione della sessione con la cartella clinica digitale.</p>
+            <span class="text-xs text-clinical-600 bg-clinical-50 px-3 py-1 rounded-full font-semibold">Attendere prego</span>
+        </div>
     </div>
-  </div>
 
-  <!-- Script di Gestione Applicazione -->
-  <script>
-    // Configurazione Stato Globale
-    const apiKey = ""; 
-    const state = {
-      phase: 'intro',
-      timeLeft: 0,
-      score: 0,
-      answers: {},
-      currentImage: null,
-      questions: [],
-      statusMessage: "",
-      loadingProgress: 0,
-      useDistraction: true,
-      distractDifficulty: 'base',
-      quizDifficulty: 'base',
-      distractStep: 0,
-      distractTask: { type: 'math', a: 0, b: 0, word: '', target: '', userVal: '' }
-    };
+    <!-- Firebase SDK Imports (v11.6.1 ES Modules) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const usedTasks = new Set();
-    let globalTimerInterval = null;
+        // Extract global environment credentials or fallback gracefully
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    const shortWords = ["CASA", "MARE", "LUNA", "PANE", "GATTO", "LIBRO", "FIORE", "PORTA", "SOLE", "VINO"];
-    const longWords = ["ELEFANTE", "ASTRONAVE", "ORIZZONTE", "QUADRANTE", "COMPUTER", "ARCHITETTO", "DINOSAURO", "SPETTACOLO"];
+        let db = null;
+        let auth = null;
+        let currentUser = null;
 
-    const themeCategories = {
-      interni: [
-        "Una scrivania pulita con un solo laptop aperto, una tazza fumante e una lampada",
-        "Una mensola con tre vasi di ceramica di colori diversi e un orologio",
-        "Una cucina moderna con un piatto di frutta, un frullatore e un guanto da forno",
-        "Un angolo lettura con una poltrona singola, un libro aperto e un cuscino"
-      ],
-      esterni: [
-        "Una panchina in legno in un prato verde con un ombrello giallo appoggiato",
-        "Un piccolo balcone con due sedie pieghevoli e una pianta di girasole",
-        "Un vialetto di ghiaia con una bicicletta rossa e una cassetta delle lettere",
-        "Una tenda da campeggio azzurra accanto a uno zaino e una torcia"
-      ],
-      oggetti: [
-        "Un set da pittura: tre pennelli, un barattolo d'acqua e una tavolozza",
-        "Tre giocattoli sul tappeto: una palla, un trenino e un cubo colorato",
-        "Vassoio della colazione: un bicchiere di succo, un cornetto e un tovagliolo",
-        "Una borsa aperta con una macchina fotografica, un cappello e una mappa"
-      ]
-    };
+        // Immediately-invoked function to set up clinical workspace database
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                console.warn("[NeuroTrain Web Client] Configurazione Firebase non configurata. Esecuzione in modalità Standalone.");
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-    // Inizializzazione Lucide Icons
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      updateIntroUI();
-    });
-
-    // Cambia schermata visivamente
-    function setPhase(newPhase) {
-      state.phase = newPhase;
-      document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-      const activeSection = document.getElementById(`phase-${newPhase}`);
-      if (activeSection) activeSection.classList.remove('hidden');
-    }
-
-    // Configurazione Parametri Iniziali
-    function setQuizDifficulty(diff) {
-      state.quizDifficulty = diff;
-      updateIntroUI();
-    }
-
-    function setDistractDifficulty(diff) {
-      state.distractDifficulty = diff;
-      updateIntroUI();
-    }
-
-    function toggleDistraction() {
-      state.useDistraction = !state.useDistraction;
-      updateIntroUI();
-    }
-
-    function updateIntroUI() {
-      // Toggle
-      const handle = document.getElementById('toggle-handle');
-      const toggle = document.getElementById('toggle-distraction');
-      if (state.useDistraction) {
-        toggle.className = "relative inline-flex h-8 w-14 items-center rounded-full transition-all bg-indigo-600";
-        handle.className = "inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform translate-x-7";
-        document.getElementById('distraction-diff-container').classList.remove('opacity-30', 'pointer-events-none');
-      } else {
-        toggle.className = "relative inline-flex h-8 w-14 items-center rounded-full transition-all bg-slate-300";
-        handle.className = "inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform translate-x-1";
-        document.getElementById('distraction-diff-container').classList.add('opacity-30', 'pointer-events-none');
-      }
-
-      // Quiz Buttons
-      document.getElementById('btn-quiz-base').className = state.quizDifficulty === 'base'
-        ? "py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-indigo-600 bg-indigo-50 text-indigo-700 shadow-inner"
-        : "py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-slate-200 bg-white text-slate-400 hover:border-slate-300";
-
-      document.getElementById('btn-quiz-avanzato').className = state.quizDifficulty === 'avanzato'
-        ? "py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-indigo-600 bg-indigo-50 text-indigo-700 shadow-inner"
-        : "py-4 rounded-2xl font-black text-xs uppercase tracking-widest border-2 border-slate-200 bg-white text-slate-400 hover:border-slate-300";
-
-      // Distract Buttons
-      document.getElementById('btn-distract-base').className = state.distractDifficulty === 'base'
-        ? "py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-indigo-600 bg-indigo-50 text-indigo-700"
-        : "py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-slate-200 bg-white text-slate-400 hover:border-slate-300";
-
-      document.getElementById('btn-distract-avanzato').className = state.distractDifficulty === 'avanzato'
-        ? "py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-indigo-600 bg-indigo-50 text-indigo-700"
-        : "py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-slate-200 bg-white text-slate-400 hover:border-slate-300";
-    }
-
-    // Exponential Backoff API Fetch
-    async function fetchWithRetry(url, options, retries = 5, delay = 1000) {
-      try {
-        const res = await fetch(url, options);
-        if (!res.ok) throw new Error(`Status: ${res.status}`);
-        return await res.json();
-      } catch (err) {
-        if (retries <= 0) throw err;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return fetchWithRetry(url, options, retries - 1, delay * 2);
-      }
-    }
-
-    function getRandomTheme() {
-      const categories = Object.keys(themeCategories);
-      const randomCat = categories[Math.floor(Math.random() * categories.length)];
-      const themes = themeCategories[randomCat];
-      return themes[Math.floor(Math.random() * themes.length)];
-    }
-
-    // Inizio Esercizio con Integrazione Modelli Generativi
-    async function startExercise() {
-      setPhase('loading');
-      updateProgress(0, "Inizializzazione del test...");
-      usedTasks.clear();
-
-      const theme = getRandomTheme();
-
-      try {
-        // Step 1: Generazione dell'immagine con Imagen 4.0
-        updateProgress(15, "Inizializzazione motore grafico...");
-        const progressTimer1 = startLoadingInterval(15, 45, 200);
-
-        const imgResult = await fetchWithRetry(
-          `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              instances: [{ 
-                prompt: `Clean, minimal 3D render of ${theme}. Simple shapes, solid colors, studio lighting, clear composition, only 5 main objects, educational style.` 
-              }],
-              parameters: { sampleCount: 1 }
-            })
-          }
-        );
-
-        clearInterval(progressTimer1);
-        updateProgress(50, "Caricamento dettagli visivi completato.");
-
-        const base64Image = imgResult.predictions[0].bytesBase64Encoded;
-        state.currentImage = `data:image/png;base64,${base64Image}`;
-
-        // Step 2: Generazione del Quiz con Gemini 2.5
-        updateProgress(55, "Analisi dell'immagine da parte dell'IA...");
-        const progressTimer2 = startLoadingInterval(55, 90, 250);
-
-        const quizPrompt = `Analizza questa immagine. Crea 5 domande a scelta multipla in italiano.
-          Focus: colori primari, conteggio oggetti, posizioni (sopra, sotto, destra, sinistra).
-          Mantieni le domande semplici e dirette.
-          Rispondi ESCLUSIVAMENTE con un oggetto JSON: { "questions": [{ "id": 1, "question": "...", "options": ["...", "...", "...", "..."], "correct": "..." }] }`;
-
-        const genResult = await fetchWithRetry(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                role: "user",
-                parts: [{ text: quizPrompt }, { inlineData: { mimeType: "image/png", data: base64Image } }]
-              }],
-              generationConfig: { responseMimeType: "application/json" }
-            })
-          }
-        );
-
-        clearInterval(progressTimer2);
-        updateProgress(100, "Si comincia! Preparati...");
-
-        const quizData = JSON.parse(genResult.candidates[0].content.parts[0].text);
-        state.questions = quizData.questions;
-
-        setTimeout(() => {
-          runStudyPhase();
-        }, 800);
-
-      } catch (err) {
-        console.error(err);
-        updateProgress(0, "Si è verificato un errore. Ripristino in corso...");
-        setTimeout(startExercise, 3000);
-      }
-    }
-
-    function startLoadingInterval(start, max, delay) {
-      let current = start;
-      return setInterval(() => {
-        if (current < max) {
-          current += 1;
-          const msg = current >= 88 ? "Preparati... la prova sta per iniziare!" : state.statusMessage;
-          updateProgress(current, msg);
+                // Wait for Auth priority setup (Rule 3)
+                if (initialAuthToken) {
+                    const cred = await signInWithCustomToken(auth, initialAuthToken);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+                console.log("[NeuroTrain DB] Autenticazione completata. ID: ", currentUser.uid);
+            } catch (err) {
+                console.error("[NeuroTrain DB] Errore di autenticazione o inizializzazione Firebase:", err);
+            }
         }
-      }, delay);
-    }
 
-    function updateProgress(value, message) {
-      state.loadingProgress = value;
-      state.statusMessage = message;
-      document.getElementById('loading-bar').style.width = `${value}%`;
-      document.getElementById('loading-percent').innerText = `${Math.floor(value)}%`;
-      document.getElementById('loading-message').innerText = message;
-    }
+        // Run setup immediately on script load
+        initFirebase();
 
-    // FASE: STUDIO (Osservazione dell'immagine)
-    function runStudyPhase() {
-      setPhase('study');
-      document.getElementById('study-image').src = state.currentImage;
-      state.timeLeft = 35;
-      document.getElementById('study-timer').innerText = `${state.timeLeft}s`;
+        async function salvaDatiEsercizio(datiEsercizio) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSessione = urlParams.get('sessione') === 'true';
+            const pazienteId = urlParams.get('pazienteId');
+            const sessionId = urlParams.get('sessionId') || urlParams.get('sessioneId');
+            const tipoSessione = urlParams.get('tipoSessione') || urlParams.get('tipo') || 'libera';
+            const esercizioIndex = parseInt(urlParams.get('esercizioIndex') || '0', 10);
+            const ritornoUrl = urlParams.get('ritornoUrl') || 'index.html';
 
-      if (globalTimerInterval) clearInterval(globalTimerInterval);
-      globalTimerInterval = setInterval(() => {
-        state.timeLeft -= 1;
-        document.getElementById('study-timer').innerText = `${state.timeLeft}s`;
-        if (state.timeLeft <= 0) {
-          clearInterval(globalTimerInterval);
-          runDistractPhase();
+            if (!isSessione || !pazienteId) {
+                console.log("[NeuroTrain DB] Nessuna sessione attiva trovata nell'URL. Sincronizzazione saltata.");
+                return;
+            }
+
+            if (!db || !currentUser) {
+                console.error("[NeuroTrain DB] Impossibile salvare i risultati: Firebase non pronto o non autenticato.");
+                procediRedirect();
+                return;
+            }
+
+            // Show sync overlay visualizer
+            document.getElementById('saving-overlay').classList.remove('hidden');
+
+            try {
+                if (tipoSessione === 'pianificata' && sessionId) {
+                    console.log("[NeuroTrain DB] Rilevata sessione PIANIFICATA. Aggiornamento in corso...");
+                    
+                    // Search for session document (Respecting RULE 1 - sandboxed paths)
+                    const sessionPathGlobal = doc(db, 'artifacts', appId, 'public', 'data', 'sessioni', sessionId);
+                    const sessionPathNested = doc(db, 'artifacts', appId, 'public', 'data', 'storico_pazienti', pazienteId, 'sessioni', sessionId);
+
+                    let selectedDocRef = sessionPathGlobal;
+                    let snap = await getDoc(sessionPathGlobal);
+
+                    if (!snap.exists()) {
+                        const snap2 = await getDoc(sessionPathNested);
+                        if (snap2.exists()) {
+                            selectedDocRef = sessionPathNested;
+                            snap = snap2;
+                        }
+                    }
+
+                    if (snap.exists()) {
+                        const sessionData = snap.data();
+                        let risultati = sessionData.risultati || [];
+                        let esercizi = sessionData.esercizi || [];
+
+                        // Inject exercise data inside results array index
+                        risultati[esercizioIndex] = datiEsercizio;
+
+                        // Align exercise configuration inside array status
+                        if (esercizi[esercizioIndex]) {
+                            esercizi[esercizioIndex].stato = "completato";
+                            esercizi[esercizioIndex].risultato = datiEsercizio.risultati;
+                        }
+
+                        // Determine if full planning sequence is finished
+                        const tuttiCompletati = esercizi.every(e => e.stato === "completato");
+                        const updatePayload = {
+                            risultati: risultati,
+                            esercizi: esercizi
+                        };
+                        if (tuttiCompletati) {
+                            updatePayload.stato = "completata";
+                        }
+
+                        await updateDoc(selectedDocRef, updatePayload);
+                        console.log("[NeuroTrain DB] Sessione pianificata salvata con successo.");
+                    } else {
+                        console.warn("[NeuroTrain DB] Sessione ID non trovata.");
+                    }
+
+                } else {
+                    console.log("[NeuroTrain DB] Rilevata sessione LIBERA. Aggiunta a eserciziSvolti...");
+                    
+                    // Method 1: Subcollection /storico_pazienti/{pazienteId}/sessioni (RULE 1 sandbox compliant)
+                    const sessioniSubcoll = collection(db, 'artifacts', appId, 'public', 'data', 'storico_pazienti', pazienteId, 'sessioni');
+                    let subcollDocs = [];
+                    try {
+                        const snap = await getDocs(sessioniSubcoll);
+                        subcollDocs = snap.docs;
+                    } catch (e) {
+                        console.log("[NeuroTrain DB] Impossibile recuperare subcollection 'sessioni':", e);
+                    }
+
+                    if (subcollDocs.length > 0) {
+                        // Sort by date/timestamp in memory (RULE 2)
+                        subcollDocs.sort((a, b) => {
+                            const valA = a.data()?.data || a.data()?.timestamp || 0;
+                            const valB = b.data()?.data || b.data()?.timestamp || 0;
+                            return new Date(valB) - new Date(valA);
+                        });
+                        const lastDoc = subcollDocs[0];
+                        const lastDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'storico_pazienti', pazienteId, 'sessioni', lastDoc.id);
+                        
+                        let eserciziSvolti = lastDoc.data().eserciziSvolti || [];
+                        eserciziSvolti.push(datiEsercizio);
+
+                        await updateDoc(lastDocRef, { eserciziSvolti });
+                        console.log("[NeuroTrain DB] Esercizio salvato nell'ultimo blocco di sessione libera (subcollection).");
+                    } else {
+                        // Method 2 Fallback: Patient Root Document with a 'sessioni' array
+                        const patientDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'storico_pazienti', pazienteId);
+                        const pSnap = await getDoc(patientDocRef);
+
+                        if (pSnap.exists()) {
+                            const pData = pSnap.data();
+                            let sessioni = pData.sessioni || [];
+                            
+                            if (sessioni.length > 0) {
+                                // Add to last item of array
+                                let lastSession = sessioni[sessioni.length - 1];
+                                if (!lastSession.eserciziSvolti) lastSession.eserciziSvolti = [];
+                                lastSession.eserciziSvolti.push(datiEsercizio);
+                                
+                                await updateDoc(patientDocRef, { sessioni });
+                                console.log("[NeuroTrain DB] Esercizio salvato nell'ultimo blocco di sessione libera (array in doc paziente).");
+                            } else {
+                                // Create a session block from scratch inside array
+                                const nuovaSessione = {
+                                    id: "sess_" + Date.now(),
+                                    data: new Date().toISOString(),
+                                    tipo: "libera",
+                                    eserciziSvolti: [datiEsercizio]
+                                };
+                                sessioni.push(nuovaSessione);
+                                await updateDoc(patientDocRef, { sessioni });
+                                console.log("[NeuroTrain DB] Creata nuova sessione nell'array paziente.");
+                            }
+                        } else {
+                            console.warn("[NeuroTrain DB] Profilo storico_pazienti non trovato per l'ID specificato.");
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[NeuroTrain DB] Imprevisto durante la persistenza dei dati:", err);
+            } finally {
+                // Ensure redirect always fires to avoid locking clinical screens
+                procediRedirect();
+            }
         }
-      }, 1000);
-    }
 
-    function skipStudy() {
-      clearInterval(globalTimerInterval);
-      runDistractPhase();
-    }
+        // Safely redirect to dashboard index with query parameters intact
+        function procediRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSessione = urlParams.get('sessione') === 'true';
+            const pazienteId = urlParams.get('pazienteId');
+            const sessionId = urlParams.get('sessionId') || urlParams.get('sessioneId');
+            const ritornoUrl = urlParams.get('ritornoUrl') || 'index.html';
 
-    // FASE: DISTRAZIONE
-    function runDistractPhase() {
-      if (!state.useDistraction) {
-        runQuizPhase();
-        return;
-      }
-
-      setPhase('distract');
-      state.timeLeft = 25;
-      state.distractStep = 0;
-      document.getElementById('distract-timer').innerText = `${state.timeLeft}s`;
-      document.getElementById('distract-input').value = "";
-      document.getElementById('distract-input').focus();
-
-      generateNextDistractTask(0);
-
-      if (globalTimerInterval) clearInterval(globalTimerInterval);
-      globalTimerInterval = setInterval(() => {
-        state.timeLeft -= 1;
-        document.getElementById('distract-timer').innerText = `${state.timeLeft}s`;
-        if (state.timeLeft <= 0) {
-          clearInterval(globalTimerInterval);
-          runQuizPhase();
+            if (isSessione) {
+                let targetUrl = ritornoUrl;
+                const connector = targetUrl.includes('?') ? '&' : '?';
+                targetUrl += `${connector}sessione=true&pazienteId=${pazienteId || ''}`;
+                if (sessionId) {
+                    targetUrl += `&sessionId=${sessionId}`;
+                }
+                
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 1500);
+            }
         }
-      }, 1000);
-    }
 
-    function generateNextDistractTask(stepIndex) {
-      let newTask = null;
-      let isUnique = false;
-      let attempts = 0;
+        // Attach persistence callback to window so standard game loop can reach it
+        window.salvaDatiEsercizio = salvaDatiEsercizio;
+        window.procediRedirect = procediRedirect;
+    </script>
 
-      while (!isUnique && attempts < 50) {
-        const isMath = state.distractDifficulty === 'base' ? Math.random() > 0.4 : stepIndex % 2 === 0;
-
-        if (isMath) {
-          const a = Math.floor(Math.random() * 20) + 2;
-          const b = Math.floor(Math.random() * 20) + 2;
-          const id = `m-${a}+${b}`;
-          if (!usedTasks.has(id)) {
-            newTask = { type: 'math', a, b, word: '', target: (a + b).toString(), userVal: '' };
-            usedTasks.add(id);
-            isUnique = true;
-          }
-        } else {
-          // Forza parola lunga in step alternati per preservare i vincoli
-          const forceLong = stepIndex === 1 || stepIndex === 3 || (state.distractDifficulty === 'avanzato' && Math.random() > 0.5);
-          const pool = forceLong ? longWords : shortWords;
-          const word = pool[Math.floor(Math.random() * pool.length)];
-
-          if (!usedTasks.has(word)) {
-            newTask = { type: 'word', a: 0, b: 0, word, target: word.split('').reverse().join(''), userVal: '' };
-            usedTasks.add(word);
-            isUnique = true;
-          }
-        }
-        attempts++;
-      }
-
-      state.distractTask = newTask || { type: 'math', a: 1, b: 1, word: '', target: '2', userVal: '' };
-      
-      // Update UI per distract screen
-      const mathArea = document.getElementById('distract-math');
-      const wordArea = document.getElementById('distract-word');
-      const input = document.getElementById('distract-input');
-
-      input.value = "";
-
-      if (state.distractTask.type === 'math') {
-        mathArea.classList.remove('hidden');
-        wordArea.classList.add('hidden');
-        document.getElementById('math-a').innerText = state.distractTask.a;
-        document.getElementById('math-b').innerText = state.distractTask.b;
-      } else {
-        mathArea.classList.add('hidden');
-        wordArea.classList.remove('hidden');
-        document.getElementById('word-to-reverse').innerText = state.distractTask.word;
+    <!-- Interactive Game Logic Script -->
+    <script>
+        // Game State Variables
+        let currentDifficulty = '';
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let currentSceneData = null;
+        let currentQuestionIndex = 0;
+        let questions = [];
+        let userAnswers = [];
+        let selectedOptionIndex = null;
         
-        const badge = document.getElementById('word-badge');
-        if (state.distractTask.word.length >= 8) {
-          badge.classList.remove('hidden');
-        } else {
-          badge.classList.add('hidden');
+        // Accurate cognitive performance timer metrics
+        let exerciseStartTime = null;
+
+        // Web Audio Synthesizer for Clinical Feedback Signals
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                } else if (type === 'tick') {
+                    osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                } else if (type === 'warning') {
+                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'success') {
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'failure') {
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                }
+            } catch (e) {
+                console.log("Audio feedback initialization waiting for guest interaction.");
+            }
         }
-      }
-    }
 
-    function onDistractInput(val) {
-      const cleaned = val.toUpperCase().trim();
-      state.distractTask.userVal = val;
+        // UI Steps DOM elements
+        const stepDifficulty = document.getElementById('step-difficulty');
+        const stepObservation = document.getElementById('step-observation');
+        const stepQuiz = document.getElementById('step-quiz');
+        const stepResults = document.getElementById('step-results');
 
-      if (cleaned === state.distractTask.target) {
-        setTimeout(() => {
-          state.distractStep += 1;
-          generateNextDistractTask(state.distractStep);
-        }, 200);
-      }
-    }
-
-    // FASE: QUIZ (Rievocazione)
-    function runQuizPhase() {
-      setPhase('quiz');
-      state.answers = {};
-
-      const container = document.getElementById('quiz-questions-container');
-      container.innerHTML = "";
-
-      state.questions.forEach((q, idx) => {
-        const card = document.createElement('div');
-        card.className = "bg-slate-50 p-8 rounded-[2rem] border border-slate-100";
-        
-        const questionText = document.createElement('p');
-        questionText.className = "font-black text-xl mb-6 leading-tight flex gap-4";
-        questionText.innerHTML = `<span class="text-indigo-400 mr-2">0${idx + 1}</span> ${q.question}`;
-        card.appendChild(questionText);
-
-        const optionsGrid = document.createElement('div');
-        optionsGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
-
-        q.options.forEach(opt => {
-          const btn = document.createElement('button');
-          btn.id = `opt-${idx}-${opt.replace(/\s+/g, '-')}`;
-          btn.className = "p-5 rounded-2xl text-left font-bold text-sm border-2 border-slate-100 bg-white text-slate-600 hover:border-indigo-200 transition-all";
-          btn.innerText = opt;
-          btn.onclick = () => selectOption(idx, opt, q.options);
-          optionsGrid.appendChild(btn);
+        // Check if session context is active to update interface elements on start
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('sessione') === 'true') {
+                const homeBtnLabel = document.getElementById('btn-home-label');
+                if (homeBtnLabel) homeBtnLabel.textContent = "Hub Sessione";
+                document.getElementById('btn-home').classList.remove('hidden');
+            }
         });
 
-        card.appendChild(optionsGrid);
-        container.appendChild(card);
-      });
+        // Navigation function: Back to home or Dashboard Hub
+        function goHome() {
+            playSound('click');
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSessione = urlParams.get('sessione') === 'true';
+            
+            if (isSessione) {
+                // Return immediately to Hub if inside an active medical session
+                if (typeof window.procediRedirect === 'function') {
+                    window.procediRedirect();
+                } else {
+                    window.location.href = urlParams.get('ritornoUrl') || 'index.html';
+                }
+                return;
+            }
 
-      updateQuizSubmitBtn();
-    }
-
-    function selectOption(qIdx, option, allOptions) {
-      state.answers[qIdx] = option;
-
-      allOptions.forEach(opt => {
-        const btn = document.getElementById(`opt-${qIdx}-${opt.replace(/\s+/g, '-')}`);
-        if (btn) {
-          if (opt === option) {
-            btn.className = "p-5 rounded-2xl text-left font-bold text-sm border-2 border-indigo-600 bg-indigo-50 text-indigo-700 shadow-lg";
-          } else {
-            btn.className = "p-5 rounded-2xl text-left font-bold text-sm border-2 border-slate-100 bg-white text-slate-600 hover:border-indigo-200 transition-all";
-          }
+            // Hide active exercise blocks
+            stepObservation.classList.add('hidden');
+            stepQuiz.classList.add('hidden');
+            stepResults.classList.add('hidden');
+            
+            // Show difficulty block
+            stepDifficulty.classList.remove('hidden');
+            
+            // Hide Home button (not in session mode)
+            document.getElementById('btn-home').classList.add('hidden');
         }
-      });
 
-      updateQuizSubmitBtn();
-    }
+        // Color Dictionaries for Human Readability
+        const colorTranslations = {
+            '#ef4444': 'Rosso',
+            '#3b82f6': 'Blu',
+            '#10b981': 'Verde',
+            '#f59e0b': 'Giallo',
+            '#8b5cf6': 'Viola',
+            '#ec4899': 'Rosa',
+            '#f97316': 'Arancione',
+            '#14b8a6': 'Teal/Smeraldo',
+            '#64748b': 'Grigio',
+            '#78350f': 'Marrone scuro',
+            '#b45309': 'Marrone chiaro',
+            '#e2e8f0': 'Bianco sporco',
+            '#db2777': 'Fucsia',
+            '#06b6d4': 'Azzurro/Turchese',
+            '#4f46e5': 'Indaco',
+            '#059669': 'Smeraldo scuro',
+            '#ea580c': 'Arancione acceso'
+        };
 
-    function updateQuizSubmitBtn() {
-      const btn = document.getElementById('btn-submit-quiz');
-      const answeredCount = Object.keys(state.answers).length;
-      if (answeredCount === state.questions.length) {
-        btn.removeAttribute('disabled');
-        btn.className = "mt-12 w-full bg-slate-900 hover:bg-black text-white font-black py-7 rounded-[2rem] text-xl uppercase tracking-widest transition-all";
-      } else {
-        btn.setAttribute('disabled', 'true');
-        btn.className = "mt-12 w-full bg-slate-200 text-slate-400 font-black py-7 rounded-[2rem] text-xl uppercase tracking-widest disabled:opacity-30 cursor-not-allowed";
-      }
-    }
+        // Utility to shuffle arrays (for scene variations)
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
 
-    // FASE: RISULTATI
-    function finishQuiz() {
-      let finalScore = 0;
-      state.questions.forEach((q, idx) => {
-        if (state.answers[idx] === q.correct) finalScore++;
-      });
-      state.score = finalScore;
+        // Generate scene based on difficulty
+        function generateScene(difficulty) {
+            const container = document.getElementById('canvas-container');
+            container.innerHTML = ''; // reset
 
-      setPhase('result');
+            if (difficulty === 'facile') {
+                return generateFacileScene(container);
+            } else if (difficulty === 'medio') {
+                return generateMedioScene(container);
+            } else {
+                return generateDifficileScene(container);
+            }
+        }
 
-      // Update Icon and Score UI
-      const iconContainer = document.getElementById('result-icon-container');
-      const icon = document.getElementById('result-icon');
-      const text = document.getElementById('result-text');
+        // GENERATOR: FACILE
+        function generateFacileScene(container) {
+            // Expanded variety of shapes and colors
+            const shapesList = ['circle', 'rect', 'polygon', 'star', 'diamond', 'cross'];
+            const colorsList = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'];
+            
+            // Randomize background style
+            const bgPatterns = ['grid', 'dots', 'stripes', 'solid'];
+            const chosenPattern = bgPatterns[Math.floor(Math.random() * bgPatterns.length)];
 
-      document.getElementById('result-score').innerHTML = `${finalScore} <span class="text-slate-300 text-3xl">/ 5</span>`;
+            // Randomly select 3 shapes, 3 unique colors
+            const chosenShapes = shuffle([...shapesList]).slice(0, 3);
+            const chosenColors = shuffle([...colorsList]).slice(0, 3);
+            const positions = ['Sinistra', 'Centro', 'Destra'];
 
-      if (finalScore === 5) {
-        iconContainer.className = "mb-8 inline-flex p-8 rounded-[3rem] shadow-xl bg-emerald-50 text-emerald-600";
-        icon.setAttribute('data-lucide', 'check-circle');
-        text.innerText = "Incredibile! Memoria perfetta.";
-      } else if (finalScore >= 3) {
-        iconContainer.className = "mb-8 inline-flex p-8 rounded-[3rem] shadow-xl bg-indigo-50 text-indigo-600";
-        icon.setAttribute('data-lucide', 'check-circle');
-        text.innerText = "Ben fatto, sei rimasto concentrato.";
-      } else {
-        iconContainer.className = "mb-8 inline-flex p-8 rounded-[3rem] shadow-xl bg-rose-50 text-rose-600";
-        icon.setAttribute('data-lucide', 'alert-circle');
-        text.innerText = "La distrazione ha vinto. Riprova!";
-      }
+            // Build dynamic SVG
+            let patternDef = '';
+            if (chosenPattern === 'grid') {
+                patternDef = `
+                    <pattern id="facile-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+                    </pattern>
+                `;
+            } else if (chosenPattern === 'dots') {
+                patternDef = `
+                    <pattern id="facile-pattern" width="25" height="25" patternUnits="userSpaceOnUse">
+                        <circle cx="12" cy="12" r="2" fill="#cbd5e1" />
+                    </pattern>
+                `;
+            } else if (chosenPattern === 'stripes') {
+                patternDef = `
+                    <pattern id="facile-pattern" width="30" height="30" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                        <line x1="0" y1="0" x2="0" y2="30" stroke="#e2e8f0" stroke-width="2" />
+                    </pattern>
+                `;
+            }
 
-      // Riepilogo Risposte
-      const summaryContainer = document.getElementById('result-summary-container');
-      summaryContainer.innerHTML = "";
+            let svgContent = `
+                <svg width="100%" height="280" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-lg">
+                    <defs>${patternDef}</defs>
+                    <rect width="100%" height="100%" fill="${chosenPattern === 'solid' ? '#f8fafc' : 'url(#facile-pattern)'}" rx="16" />
+            `;
 
-      state.questions.forEach((q, idx) => {
-        const isCorrect = state.answers[idx] === q.correct;
-        const div = document.createElement('div');
-        div.className = "border-b border-slate-200 last:border-0 pb-4 last:pb-0";
+            // Draw objects
+            const coords = [
+                { x: 150, y: 150 }, // Left
+                { x: 300, y: 150 }, // Center
+                { x: 450, y: 150 }  // Right
+            ];
 
-        div.innerHTML = `
-          <p class="text-sm font-black mb-3 text-slate-800">${idx + 1}. ${q.question}</p>
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center gap-2 text-xs p-3 rounded-xl border ${isCorrect ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}">
-              <i data-lucide="${isCorrect ? 'check-circle' : 'x-circle'}" class="w-4 h-4"></i>
-              <span class="font-bold">Tua risposta:</span> ${state.answers[idx] || "Nessuna"}
-            </div>
-            ${!isCorrect ? `
-              <div class="flex items-center gap-2 text-xs p-3 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700">
-                <i data-lucide="check-circle" class="w-4 h-4"></i>
-                <span class="font-bold">Risposta corretta:</span> ${q.correct}
-              </div>
-            ` : ""}
-          </div>
-        `;
-        summaryContainer.appendChild(div);
-      });
+            const shapesDescription = [];
+            const shapeNames = {
+                'circle': 'Cerchio',
+                'rect': 'Quadrato',
+                'polygon': 'Triangolo',
+                'star': 'Stella',
+                'diamond': 'Rombo',
+                'cross': 'Croce'
+            };
 
-      lucide.createIcons();
-    }
+            for (let i = 0; i < 3; i++) {
+                const shape = chosenShapes[i];
+                const color = chosenColors[i];
+                const coord = coords[i];
+                const pos = positions[i];
 
-    // Modal Control
-    function openImageModal() {
-      document.getElementById('modal-image').src = state.currentImage;
-      document.getElementById('image-modal').classList.remove('hidden');
-    }
+                shapesDescription.push({
+                    position: pos,
+                    shape: shapeNames[shape],
+                    color: colorTranslations[color],
+                    colorHex: color
+                });
 
-    function closeImageModal() {
-      document.getElementById('image-modal').classList.add('hidden');
-    }
+                if (shape === 'circle') {
+                    svgContent += `<circle cx="${coord.x}" cy="${coord.y}" r="45" fill="${color}" stroke="#1e293b" stroke-width="3" />`;
+                } else if (shape === 'rect') {
+                    svgContent += `<rect x="${coord.x - 45}" y="${coord.y - 45}" width="90" height="90" rx="8" fill="${color}" stroke="#1e293b" stroke-width="3" />`;
+                } else if (shape === 'polygon') {
+                    svgContent += `<polygon points="${coord.x},${coord.y - 50} ${coord.x - 50},${coord.y + 40} ${coord.x + 50},${coord.y + 40}" fill="${color}" stroke="#1e293b" stroke-width="3" />`;
+                } else if (shape === 'star') {
+                    svgContent += `
+                        <polygon points="
+                            ${coord.x},${coord.y - 55} 
+                            ${coord.x + 15},${coord.y - 15} 
+                            ${coord.x + 55},${coord.y - 15} 
+                            ${coord.x + 22},${coord.y + 10} 
+                            ${coord.x + 35},${coord.y + 50} 
+                            ${coord.x},${coord.y + 25} 
+                            ${coord.x - 35},${coord.y + 50} 
+                            ${coord.x - 22},${coord.y + 10} 
+                            ${coord.x - 55},${coord.y - 15} 
+                            ${coord.x - 15},${coord.y - 15}" 
+                            fill="${color}" stroke="#1e293b" stroke-width="3" />
+                    `;
+                } else if (shape === 'diamond') {
+                    svgContent += `<polygon points="${coord.x},${coord.y - 50} ${coord.x + 50},${coord.y} ${coord.x},${coord.y + 50} ${coord.x - 50},${coord.y}" fill="${color}" stroke="#1e293b" stroke-width="3" />`;
+                } else if (shape === 'cross') {
+                    svgContent += `
+                        <path d="M ${coord.x - 15} ${coord.y - 45} h 30 v 30 h 30 v 30 h -30 v 30 h -30 v -30 h -30 v -30 h 30 Z" 
+                              fill="${color}" stroke="#1e293b" stroke-width="3" />
+                    `;
+                }
+            }
 
-    function resetExercise() {
-      setPhase('intro');
-      updateIntroUI();
-    }
-  </script>
+            svgContent += `</svg>`;
+            container.innerHTML = svgContent;
+
+            // Generate randomized target question templates
+            const generatedQuestions = [
+                {
+                    domain: 'spatial',
+                    text: `Quale forma geometrica si trova nella posizione di **${shapesDescription[0].position}** (sinistra)?`,
+                    options: shuffle([shapesDescription[0].shape, shapesDescription[1].shape, shapesDescription[2].shape, 'Pentagono']),
+                    correct: shapesDescription[0].shape
+                },
+                {
+                    domain: 'attention',
+                    text: `Di che colore è la forma posizionata al **${shapesDescription[1].position}** (centro)?`,
+                    options: shuffle([shapesDescription[1].color, shapesDescription[0].color, shapesDescription[2].color, 'Nero']),
+                    correct: shapesDescription[1].color
+                },
+                {
+                    domain: 'attention',
+                    text: `Dove si trova posizionato il **${shapesDescription[2].shape}**?`,
+                    options: ['A sinistra', 'Al centro', 'A destra'],
+                    correct: shapesDescription[2].position === 'Sinistra' ? 'A sinistra' : shapesDescription[2].position === 'Centro' ? 'Al centro' : 'A destra'
+                }
+            ];
+
+            return {
+                type: 'facile',
+                data: shapesDescription,
+                questions: generatedQuestions
+            };
+        }
+
+        // GENERATOR: MEDIO
+        function generateMedioScene(container) {
+            const lampColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']; 
+            const selectedLampColor = lampColors[Math.floor(Math.random() * lampColors.length)];
+
+            const mugColors = ['#ec4899', '#f97316', '#8b5cf6', '#14b8a6', '#ef4444', '#06b6d4']; 
+            const selectedMugColor = mugColors[Math.floor(Math.random() * mugColors.length)];
+
+            const clockTimes = ['01:30', '03:00', '04:30', '06:00', '07:30', '09:00', '10:30', '12:00'];
+            const selectedTime = clockTimes[Math.floor(Math.random() * clockTimes.length)];
+
+            const laptopScreens = ['#3b82f6', '#10b981', '#64748b', '#db2777', '#f59e0b']; 
+            const screenColorMap = { 
+                '#3b82f6': 'Blu', 
+                '#10b981': 'Verde', 
+                '#64748b': 'Grigio',
+                '#db2777': 'Fucsia/Rosa',
+                '#f59e0b': 'Giallo'
+            };
+            const selectedScreenColor = laptopScreens[Math.floor(Math.random() * laptopScreens.length)];
+
+            // Randomize laptop graphic content
+            const screenGraphics = ['chart', 'code', 'circle', 'text'];
+            const selectedGraphic = screenGraphics[Math.floor(Math.random() * screenGraphics.length)];
+            const graphicMap = {
+                'chart': 'un grafico a linee',
+                'code': 'righe di codice di programmazione',
+                'circle': 'un bersaglio circolare',
+                'text': 'una pagina web testuale'
+            };
+
+            // Randomize desk extra accessory
+            const accessories = ['piantina', 'occhiali', 'blocco appunti'];
+            const selectedAccessory = accessories[Math.floor(Math.random() * accessories.length)];
+            const accessoryMap = {
+                'piantina': 'una piantina grassa in vasetto',
+                'occhiali': 'un paio di occhiali da vista',
+                'blocco appunti': 'un taccuino/blocco appunti giallo'
+            };
+
+            // Clock hand angles based on times
+            const timeAngleMap = {
+                '01:30': 45,
+                '03:00': 90,
+                '04:30': 135,
+                '06:00': 180,
+                '07:30': 225,
+                '09:00': 270,
+                '10:30': 315,
+                '12:00': 0
+            };
+            const clockHandRotation = timeAngleMap[selectedTime];
+
+            let svgContent = `
+                <svg width="100%" height="280" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-md">
+                    <rect width="100%" height="100%" fill="#f1f5f9" rx="16" />
+                    <line x1="50" y1="230" x2="550" y2="230" stroke="#cbd5e1" stroke-width="4" />
+                    
+                    <!-- Wall Clock -->
+                    <g transform="translate(180, 75)">
+                        <circle cx="0" cy="0" r="35" fill="#ffffff" stroke="#334155" stroke-width="3" />
+                        <line x1="0" y1="-30" x2="0" y2="-25" stroke="#334155" stroke-width="2" />
+                        <line x1="30" y1="0" x2="25" y2="0" stroke="#334155" stroke-width="2" />
+                        <line x1="0" y1="30" x2="0" y2="25" stroke="#334155" stroke-width="2" />
+                        <line x1="-30" y1="0" x2="-25" y2="0" stroke="#334155" stroke-width="2" />
+                        
+                        <!-- Hour hand (approximate static representation for simplification) -->
+                        <line x1="0" y1="0" x2="0" y2="-15" stroke="#0f172a" stroke-width="4" stroke-linecap="round" transform="rotate(${clockHandRotation})" />
+                        <!-- Minute hand pointing to 12 or 6 for halves -->
+                        <line x1="0" y1="0" x2="0" y2="-25" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" transform="rotate(${selectedTime.endsWith(':30') ? 180 : 0})" />
+                        <circle cx="0" cy="0" r="4" fill="#ef4444" />
+                    </g>
+
+                    <!-- Wooden Table -->
+                    <rect x="80" y="220" width="440" height="15" rx="4" fill="#b45309" stroke="#78350f" stroke-width="2" />
+                    <line x1="120" y1="235" x2="110" y2="290" stroke="#78350f" stroke-width="4" stroke-linecap="round" />
+                    <line x1="480" y1="235" x2="490" y2="290" stroke="#78350f" stroke-width="4" stroke-linecap="round" />
+
+                    <!-- Desk Lamp (Left) -->
+                    <g transform="translate(140, 130)">
+                        <path d="M 0 90 L 40 90 A 20 20 0 0 0 20 70 A 20 20 0 0 0 0 90 Z" fill="#475569" />
+                        <path d="M 20 70 Q 10 30 40 0" fill="none" stroke="#475569" stroke-width="5" stroke-linecap="round" />
+                        <path d="M 20 -20 L 60 -10 L 45 20 L 5 10 Z" fill="${selectedLampColor}" stroke="#1e293b" stroke-width="2" />
+                        <polygon points="12,14 40,21 100,120 0,120" fill="${selectedLampColor}" opacity="0.15" />
+                    </g>
+
+                    <!-- Laptop (Center) -->
+                    <g transform="translate(250, 150)">
+                        <rect x="10" y="0" width="110" height="70" rx="6" fill="#1e293b" />
+                        <rect x="16" y="6" width="98" height="58" fill="${selectedScreenColor}" />
+                        
+                        <!-- Dynamic Screen Content -->
+                        ${selectedGraphic === 'chart' ? `
+                            <polyline points="26,45 46,25 66,35 86,15" fill="none" stroke="#ffffff" stroke-width="2" />
+                            <circle cx="86" cy="15" r="3" fill="#ef4444" />
+                        ` : ''}
+                        ${selectedGraphic === 'code' ? `
+                            <line x1="26" y1="15" x2="86" y2="15" stroke="#ffffff" stroke-width="2" stroke-dasharray="10, 5, 20, 5" />
+                            <line x1="26" y1="25" x2="76" y2="25" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="15, 5, 5, 5" />
+                            <line x1="26" y1="35" x2="90" y2="35" stroke="#fef08a" stroke-width="2" stroke-dasharray="5, 5, 25, 5" />
+                            <line x1="26" y1="45" x2="56" y2="45" stroke="#ffffff" stroke-width="2" stroke-dasharray="10, 5" />
+                        ` : ''}
+                        ${selectedGraphic === 'circle' ? `
+                            <circle cx="65" cy="35" r="18" fill="none" stroke="#ffffff" stroke-width="2" />
+                            <circle cx="65" cy="35" r="10" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+                            <circle cx="65" cy="35" r="3" fill="#ffffff" />
+                        ` : ''}
+                        ${selectedGraphic === 'text' ? `
+                            <rect x="24" y="12" width="82" height="15" fill="#ffffff" opacity="0.8" rx="1" />
+                            <rect x="24" y="32" width="38" height="22" fill="#ffffff" opacity="0.8" rx="1" />
+                            <rect x="68" y="32" width="38" height="22" fill="#ffffff" opacity="0.8" rx="1" />
+                        ` : ''}
+
+                        <polygon points="0,70 130,70 140,82 -10,82" fill="#94a3b8" stroke="#475569" stroke-width="2" />
+                        <line x1="30" y1="76" x2="100" y2="76" stroke="#475569" stroke-width="3" stroke-linecap="round" />
+                    </g>
+
+                    <!-- Mug (Right) -->
+                    <g transform="translate(435, 195)">
+                        <path d="M 20 5 C 32 5 32 25 20 25" fill="none" stroke="${selectedMugColor}" stroke-width="4" />
+                        <rect x="0" y="0" width="22" height="30" rx="3" fill="${selectedMugColor}" stroke="#1e293b" stroke-width="2" />
+                        <path d="M 5 -10 Q 8 -5 5 0" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M 15 -12 Q 18 -6 15 -2" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" />
+                    </g>
+
+                    <!-- Dynamic Accessory (between Laptop and Mug) -->
+                    <g transform="translate(380, 200)">
+                        ${selectedAccessory === 'piantina' ? `
+                            <rect x="3" y="18" width="14" height="14" rx="2" fill="#ca8a04" stroke="#854d0e" stroke-width="1.5" />
+                            <path d="M 10 3 C 6 8 8 18 10 18 C 12 18 14 8 10 3 Z" fill="#15803d" />
+                            <path d="M 6 8 C 3 11 6 18 10 18" fill="none" stroke="#16a34a" stroke-width="1.5" />
+                            <path d="M 14 8 C 17 11 14 18 10 18" fill="none" stroke="#16a34a" stroke-width="1.5" />
+                        ` : ''}
+                        ${selectedAccessory === 'occhiali' ? `
+                            <circle cx="5" cy="18" r="7" fill="none" stroke="#000000" stroke-width="2" />
+                            <circle cx="20" cy="18" r="7" fill="none" stroke="#000000" stroke-width="2" />
+                            <path d="M 12 18 Q 13 14 13 18" fill="none" stroke="#000000" stroke-width="2" />
+                            <path d="M -2 18 Q -2 8 8 8" fill="none" stroke="#000000" stroke-width="1" />
+                        ` : ''}
+                        ${selectedAccessory === 'blocco appunti' ? `
+                            <polygon points="0,15 16,10 24,24 8,29" fill="#fef08a" stroke="#ca8a04" stroke-width="1" />
+                            <line x1="2" y1="13" x2="14" y2="9" stroke="#1e293b" stroke-width="2.5" />
+                            <line x1="4" y1="19" x2="16" y2="15" stroke="#94a3b8" stroke-width="1" />
+                            <line x1="6" y1="23" x2="18" y2="19" stroke="#94a3b8" stroke-width="1" />
+                        ` : ''}
+                    </g>
+                </svg>
+            `;
+
+            container.innerHTML = svgContent;
+
+            const generatedQuestions = [
+                {
+                    domain: 'spatial',
+                    text: 'Cosa si trova posizionato all\'estrema **sinistra** del tavolo?',
+                    options: shuffle(['La lampada da tavolo', 'La tazza', 'Il computer portatile', 'L\'orologio da parete']),
+                    correct: 'La lampada da tavolo'
+                },
+                {
+                    domain: 'attention',
+                    text: `Che ora indica l'orologio appeso sulla parete?`,
+                    options: shuffle(clockTimes.map(t => `${t.replace(':', '.')}`)),
+                    correct: selectedTime.replace(':', '.')
+                },
+                {
+                    domain: 'attention',
+                    text: `Di che colore è il paralume della **lampada da tavolo**?`,
+                    options: shuffle([colorTranslations[selectedLampColor], 'Grigio ferro', 'Viola scuro', 'Rosa confetto']),
+                    correct: colorTranslations[selectedLampColor]
+                },
+                {
+                    domain: 'attention',
+                    text: `Sul tavolo, sul lato destro del computer, è visibile:`,
+                    options: shuffle([accessoryMap[selectedAccessory], 'un paio di forbici aperte', 'una mela sbucciata', 'un portapenne in metallo']),
+                    correct: accessoryMap[selectedAccessory]
+                },
+                {
+                    domain: 'attention',
+                    text: `Cosa è raffigurato all'interno dello schermo del **computer portatile**?`,
+                    options: shuffle([graphicMap[selectedGraphic], 'lo sfondo del desktop vuoto', 'una foto di una spiaggia', 'una clessidra in caricamento']),
+                    correct: graphicMap[selectedGraphic]
+                }
+            ];
+
+            // Filter down to 4 random questions to ensure variety of question sets
+            const selectedQuestions = shuffle([...generatedQuestions]).slice(0, 4);
+
+            return {
+                type: 'medio',
+                data: {
+                    lampColor: colorTranslations[selectedLampColor],
+                    mugColor: colorTranslations[selectedMugColor],
+                    clockTime: selectedTime,
+                    screenColor: screenColorMap[selectedScreenColor],
+                    accessory: selectedAccessory,
+                    screenGraphic: selectedGraphic
+                },
+                questions: selectedQuestions
+            };
+        }
+
+        // GENERATOR: DIFFICILE
+        function generateDifficileScene(container) {
+            const months = ['GENNAIO', 'MARZO', 'GIUGNO', 'LUGLIO', 'SETTEMBRE', 'OTTOBRE', 'DICEMBRE'];
+            const chosenMonth = months[Math.floor(Math.random() * months.length)];
+
+            const days = ['03', '07', '12', '18', '24', '29', '31'];
+            const chosenDay = days[Math.floor(Math.random() * days.length)];
+
+            const codeWords = ['FOCUS', 'MIND2', 'ATTENZ', 'NEURO', 'SENSORY', 'BRAIN', 'COGNIT'];
+            const chosenWord = codeWords[Math.floor(Math.random() * codeWords.length)];
+
+            const whiteboardGraphColors = ['#ef4444', '#10b981', '#3b82f6', '#f59e0b'];
+            const chosenGraphColor = whiteboardGraphColors[Math.floor(Math.random() * whiteboardGraphColors.length)];
+            const graphColorMap = { '#ef4444': 'Rosso', '#10b981': 'Verde', '#3b82f6': 'Blu', '#f59e0b': 'Giallo' };
+
+            const fileColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']; 
+            const shuffledFiles = shuffle([...fileColors]).slice(0, 3);
+
+            const fruitTypes = ['mela_rossa', 'mela_verde', 'banana_gialla', 'arancia'];
+            const chosenFruit = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+            const fruitMap = {
+                'mela_rossa': 'Rossa',
+                'mela_verde': 'Verde',
+                'banana_gialla': 'Gialla',
+                'arancia': 'Arancione'
+            };
+
+            const stickerTypes = ['spunta', 'croce', 'attenzione', 'sorriso'];
+            const chosenSticker = stickerTypes[Math.floor(Math.random() * stickerTypes.length)];
+            const stickerMap = {
+                'spunta': 'Due segni di spunta (visti)',
+                'croce': 'Una croce rossa (X)',
+                'attenzione': 'Un punto esclamativo di pericolo',
+                'sorriso': 'Una faccina che sorride (smiley)'
+            };
+
+            const shelfItemTypes = ['coppa_oro', 'portapenne_matite'];
+            const chosenShelfItem = shelfItemTypes[Math.floor(Math.random() * shelfItemTypes.length)];
+            const shelfItemMap = {
+                'coppa_oro': 'Un trofeo dorato (coppa)',
+                'portapenne_matite': 'Un portapenne con matite'
+            };
+
+            let svgContent = `
+                <svg width="100%" height="280" viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-lg">
+                    <rect width="100%" height="100%" fill="#eaeef3" rx="16" />
+                    <line x1="300" y1="0" x2="300" y2="300" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4" />
+
+                    <!-- Left: Shelf Unit -->
+                    <rect x="40" y="40" width="220" height="220" fill="none" stroke="#78350f" stroke-width="6" />
+                    <line x1="40" y1="150" x2="260" y2="150" stroke="#78350f" stroke-width="6" />
+
+                    <!-- Shelf Top Row Left: Folder Files -->
+                    <g transform="translate(60, 60)">
+                        <rect x="0" y="0" width="20" height="80" fill="${shuffledFiles[0]}" stroke="#1e293b" stroke-width="1.5" />
+                        <rect x="3" y="10" width="14" height="20" fill="#ffffff" />
+                        <text x="10" y="24" font-size="10" font-weight="bold" fill="#000" text-anchor="middle">A</text>
+                        <rect x="22" y="0" width="20" height="80" fill="${shuffledFiles[1]}" stroke="#1e293b" stroke-width="1.5" />
+                        <rect x="25" y="10" width="14" height="20" fill="#ffffff" />
+                        <text x="32" y="24" font-size="10" font-weight="bold" fill="#000" text-anchor="middle">B</text>
+                        <rect x="44" y="0" width="20" height="80" fill="${shuffledFiles[2]}" stroke="#1e293b" stroke-width="1.5" />
+                        <rect x="47" y="10" width="14" height="20" fill="#ffffff" />
+                        <text x="54" y="24" font-size="10" font-weight="bold" fill="#000" text-anchor="middle">C</text>
+                    </g>
+
+                    <!-- Shelf Top Row Right: Dynamic Shelf Item -->
+                    <g transform="translate(170, 70)">
+                        ${chosenShelfItem === 'coppa_oro' ? `
+                            <path d="M 10 0 L 40 0 L 45 35 Q 45 55 25 55 Q 5 55 5 35 Z" fill="#f59e0b" stroke="#b45309" stroke-width="1.5" />
+                            <rect x="18" y="55" width="14" height="15" fill="#f59e0b" stroke="#b45309" stroke-width="1.5" />
+                            <rect x="10" y="70" width="30" height="8" rx="2" fill="#475569" />
+                            <path d="M 8 10 C -5 10 -5 30 7 30" fill="none" stroke="#f59e0b" stroke-width="2.5" />
+                            <path d="M 42 10 C 55 10 55 30 43 30" fill="none" stroke="#f59e0b" stroke-width="2.5" />
+                        ` : ''}
+                        ${chosenShelfItem === 'portapenne_matite' ? `
+                            <rect x="10" y="25" width="30" height="50" fill="#64748b" stroke="#334155" stroke-width="2" rx="2" />
+                            <!-- Pencils poking out -->
+                            <polygon points="15,25 18,5 21,25" fill="#3b82f6" />
+                            <polygon points="23,25 25,2 28,25" fill="#ef4444" />
+                            <polygon points="30,25 35,8 38,25" fill="#f59e0b" />
+                        ` : ''}
+                    </g>
+
+                    <!-- Shelf Bottom Row Left: Safe box/Radio -->
+                    <rect x="60" y="180" width="70" height="60" rx="3" fill="#b45309" stroke="#78350f" stroke-width="2" />
+                    <line x1="60" y1="195" x2="130" y2="195" stroke="#78350f" stroke-width="2" />
+                    <polygon points="95,202 83,222 107,222" fill="#f59e0b" stroke="#1e293b" stroke-width="1" />
+                    <circle cx="95" cy="215" r="1.5" fill="#000" />
+                    <line x1="95" y1="207" x2="95" y2="212" stroke="#000" stroke-width="1.5" stroke-linecap="round" />
+
+                    <!-- Shelf Bottom Row Right: Stack of Books + Dynamic Fruit -->
+                    <g transform="translate(150, 185)">
+                        <rect x="0" y="35" width="80" height="20" rx="2" fill="#8b5cf6" stroke="#5b21b6" stroke-width="1.5" />
+                        <rect x="70" y="37" width="10" height="16" fill="#f8fafc" />
+                        <rect x="5" y="18" width="70" height="18" rx="2" fill="#ec4899" stroke="#be185d" stroke-width="1.5" />
+                        <rect x="65" y="20" width="10" height="14" fill="#f8fafc" />
+                        
+                        <!-- Fruit Rendering -->
+                        ${chosenFruit === 'mela_rossa' ? `
+                            <circle cx="35" cy="8" r="9" fill="#ef4444" />
+                            <path d="M 35 -1 Q 38 -5 40 -6" fill="none" stroke="#78350f" stroke-width="1.5" />
+                            <path d="M 36 -3 Q 44 -5 42 -1" fill="#10b981" /> 
+                        ` : ''}
+                        ${chosenFruit === 'mela_verde' ? `
+                            <circle cx="35" cy="8" r="9" fill="#10b981" />
+                            <path d="M 35 -1 Q 38 -5 40 -6" fill="none" stroke="#78350f" stroke-width="1.5" />
+                            <path d="M 36 -3 Q 44 -5 42 -1" fill="#22c55e" /> 
+                        ` : ''}
+                        ${chosenFruit === 'banana_gialla' ? `
+                            <path d="M 22 14 Q 35 1 48 10 Q 37 9 26 18 Z" fill="#f59e0b" stroke="#ca8a04" stroke-width="1" />
+                        ` : ''}
+                        ${chosenFruit === 'arancia' ? `
+                            <circle cx="35" cy="8" r="10" fill="#f97316" />
+                            <circle cx="33" cy="5" r="1" fill="#ea580c" />
+                            <circle cx="37" cy="11" r="1" fill="#ea580c" />
+                        ` : ''}
+                    </g>
+
+                    <!-- Right Top: Whiteboard with Code word and Line chart -->
+                    <g transform="translate(330, 40)">
+                        <rect x="0" y="0" width="220" height="130" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="6" />
+                        <text x="110" y="55" font-family="'Courier New', Courier, monospace" font-size="28" font-weight="900" fill="#1d4ed8" text-anchor="middle" letter-spacing="3">${chosenWord}</text>
+                        <path d="M 30 110 Q 70 70 110 90 T 190 70" fill="none" stroke="${chosenGraphColor}" stroke-width="2.5" stroke-dasharray="1" />
+                        <circle cx="190" cy="70" r="3" fill="${chosenGraphColor}" />
+                        <rect x="180" y="105" width="25" height="10" rx="2" fill="#475569" />
+                        <rect x="180" y="112" width="25" height="3" fill="#1e293b" />
+                    </g>
+
+                    <!-- Right Bottom Left: Wall Calendar -->
+                    <g transform="translate(360, 190)">
+                        <rect x="0" y="0" width="70" height="70" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+                        <rect x="-2" y="-2" width="74" height="18" rx="2" fill="#ef4444" />
+                        <circle cx="20" cy="-2" r="3" fill="#475569" />
+                        <circle cx="50" cy="-2" r="3" fill="#475569" />
+                        <text x="35" y="11" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">${chosenMonth}</text>
+                        <text x="35" y="48" font-size="30" font-weight="black" fill="#1e293b" text-anchor="middle">${chosenDay}</text>
+                    </g>
+
+                    <!-- Right Bottom Right: Dynamic Post-it note -->
+                    <g transform="translate(465, 190)">
+                        <polygon points="0,0 60,0 60,50 50,60 0,60" fill="#fef08a" stroke="#ca8a04" stroke-width="1" />
+                        <line x1="50" y1="50" x2="60" y2="50" stroke="#ca8a04" stroke-width="1" />
+                        <line x1="50" y1="50" x2="50" y2="60" stroke="#ca8a04" stroke-width="1" />
+                        
+                        <!-- Dynamic Post-it details -->
+                        ${chosenSticker === 'spunta' ? `
+                            <line x1="10" y1="15" x2="16" y2="21" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" />
+                            <line x1="16" y1="21" x2="26" y2="9" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" />
+                            <line x1="10" y1="35" x2="16" y2="41" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" />
+                            <line x1="16" y1="41" x2="26" y2="29" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" />
+                        ` : ''}
+                        ${chosenSticker === 'croce' ? `
+                            <line x1="15" y1="15" x2="35" y2="35" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+                            <line x1="35" y1="15" x2="15" y2="35" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" />
+                        ` : ''}
+                        ${chosenSticker === 'attenzione' ? `
+                            <polygon points="25,10 15,35 35,35" fill="none" stroke="#ca8a04" stroke-width="2" />
+                            <line x1="25" y1="18" x2="25" y2="27" stroke="#ca8a04" stroke-width="2" />
+                            <circle cx="25" cy="31" r="1" fill="#ca8a04" />
+                        ` : ''}
+                        ${chosenSticker === 'sorriso' ? `
+                            <circle cx="25" cy="25" r="12" fill="none" stroke="#ca8a04" stroke-width="1.5" />
+                            <circle cx="21" cy="22" r="1.5" fill="#ca8a04" />
+                            <circle cx="29" cy="22" r="1.5" fill="#ca8a04" />
+                            <path d="M 19 28 Q 25 34 31 28" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linecap="round" />
+                        ` : ''}
+                    </g>
+                </svg>
+            `;
+
+            container.innerHTML = svgContent;
+
+            const f1Color = colorTranslations[shuffledFiles[0]];
+            const f2Color = colorTranslations[shuffledFiles[1]];
+            const f3Color = colorTranslations[shuffledFiles[2]];
+
+            const generatedQuestions = [
+                {
+                    domain: 'attention',
+                    text: `Quale esatta parola-chiave in lettere maiuscole è scritta sulla **lavagna magnetica**?`,
+                    options: shuffle(codeWords),
+                    correct: chosenWord
+                },
+                {
+                    domain: 'spatial',
+                    text: `Sullo scaffale, quale lettera identifica la cartella di colore **${f2Color}**?`,
+                    options: ['A', 'B', 'C', 'Nessuna delle tre'],
+                    correct: 'B' 
+                },
+                {
+                    domain: 'attention',
+                    text: `Che giorno del mese ed in che mese siamo nel **calendario a strappo** a parete?`,
+                    options: shuffle([
+                        `${chosenDay} ${chosenMonth}`,
+                        `${chosenDay === '12' ? '24' : '12'} ${chosenMonth}`,
+                        `${chosenDay} ${chosenMonth === 'MARZO' ? 'OTTOBRE' : 'MARZO'}`,
+                        `18 AGOSTO`
+                    ]),
+                    correct: `${chosenDay} ${chosenMonth}`
+                },
+                {
+                    domain: 'spatial',
+                    text: `Che tipo di frutto (e di quale colore) è posizionato sopra la pila di due libri nello scaffale in basso?`,
+                    options: shuffle(['Una mela ' + fruitMap['mela_rossa'].toLowerCase() + ' (Rossa)', 'Una mela ' + fruitMap['mela_verde'].toLowerCase() + ' (Verde)', 'Una banana (Gialla)', 'Un\'arancia (Arancione)']),
+                    correct: chosenFruit === 'banana_gialla' ? 'Una banana (Gialla)' : chosenFruit === 'arancia' ? 'Un\'arancia (Arancione)' : 'Una mela ' + fruitMap[chosenFruit].toLowerCase() + ' (' + fruitMap[chosenFruit] + ')'
+                },
+                {
+                    domain: 'attention',
+                    text: `Cosa è disegnato sul **foglietto adesivo giallo** (Post-it) in basso a destra?`,
+                    options: shuffle([
+                        'Due segni di spunta (visti)',
+                        'Una croce rossa (X)',
+                        'Un punto esclamativo di pericolo',
+                        'Una faccina che sorride (smiley)'
+                    ]),
+                    correct: stickerMap[chosenSticker]
+                },
+                {
+                    domain: 'attention',
+                    text: `Di quale colore è la linea tratteggiata del diagramma disegnato sotto il codice sulla lavagna magnetica?`,
+                    options: shuffle(['Rosso', 'Verde', 'Blu', 'Giallo']),
+                    correct: graphColorMap[chosenGraphColor]
+                },
+                {
+                    domain: 'spatial',
+                    text: `Nel ripiano superiore destro dello scaffale, che cosa è posizionato?`,
+                    options: shuffle([
+                        'Un trofeo dorato (coppa)',
+                        'Un portapenne con matite',
+                        'Una tazza termica nera',
+                        'Una clessidra di legno'
+                    ]),
+                    correct: shelfItemMap[chosenShelfItem]
+                }
+            ];
+
+            // Filter down to 5 random questions out of the 7 possibilities to avoid predictability
+            const selectedQuestions = shuffle([...generatedQuestions]).slice(0, 5);
+
+            return {
+                type: 'difficile',
+                data: {
+                    month: chosenMonth,
+                    day: chosenDay,
+                    word: chosenWord,
+                    apple: fruitMap[chosenFruit],
+                    graphColor: graphColorMap[chosenGraphColor],
+                    sticker: stickerMap[chosenSticker],
+                    shelfItem: shelfItemMap[chosenShelfItem]
+                },
+                questions: selectedQuestions
+            };
+        }
+
+        // CONTROL: Start Observation Stage
+        function selectDifficulty(difficulty) {
+            playSound('click');
+            currentDifficulty = difficulty;
+            
+            // Start the exercise session clock
+            exerciseStartTime = Date.now();
+
+            if (difficulty === 'facile') timerSeconds = 30;
+            else if (difficulty === 'medio') timerSeconds = 20;
+            else timerSeconds = 10;
+
+            currentSceneData = generateScene(difficulty);
+            questions = currentSceneData.questions;
+
+            currentQuestionIndex = 0;
+            userAnswers = [];
+
+            stepDifficulty.classList.add('hidden');
+            stepObservation.classList.remove('hidden');
+            document.getElementById('btn-home').classList.remove('hidden');
+
+            const display = document.getElementById('timer-display');
+            display.textContent = `${timerSeconds.toString().padStart(2, '0')}s`;
+            
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                display.textContent = `${timerSeconds.toString().padStart(2, '0')}s`;
+                
+                if (timerSeconds <= 3 && timerSeconds > 0) {
+                    playSound('warning');
+                } else {
+                    playSound('tick');
+                }
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    goToQuiz();
+                }
+            }, 1000);
+        }
+
+        // CONTROL: Hide Stimulus and Proceed to Quiz
+        function goToQuiz() {
+            playSound('click');
+            if (timerInterval) clearInterval(timerInterval);
+            
+            stepObservation.classList.add('hidden');
+            stepQuiz.classList.remove('hidden');
+
+            renderQuestion();
+        }
+
+        // CONTROL: Render Single Question UI
+        function renderQuestion() {
+            selectedOptionIndex = null;
+            document.getElementById('next-btn').disabled = true;
+            document.getElementById('next-btn').className = "px-6 py-3 bg-slate-200 text-slate-400 font-semibold rounded-xl cursor-not-allowed transition duration-150 flex items-center space-x-2 text-sm uppercase tracking-wider";
+
+            const currentQ = questions[currentQuestionIndex];
+            
+            const progressPct = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
+            document.getElementById('quiz-progress-text').textContent = `Domanda ${currentQuestionIndex + 1} di ${questions.length}`;
+            
+            document.getElementById('question-number').textContent = currentQuestionIndex + 1;
+            document.getElementById('question-text').innerHTML = currentQ.text;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            currentQ.options.forEach((option, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:border-clinical-600 hover:bg-clinical-50/10 transition-all duration-150 flex justify-between items-center group font-sans focus:outline-none";
+                btn.onclick = () => selectOption(idx, btn);
+                btn.innerHTML = `
+                    <span class="font-medium text-slate-700 group-hover:text-slate-900">${option}</span>
+                    <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center group-hover:border-clinical-600 container-radio">
+                        <div class="w-2.5 h-2.5 rounded-full bg-clinical-600 hidden dot-radio"></div>
+                    </div>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // CONTROL: Select Radio Option
+        function selectOption(index, buttonElement) {
+            playSound('click');
+            selectedOptionIndex = index;
+            
+            const optionsContainer = document.getElementById('options-container');
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.classList.remove('border-clinical-600', 'bg-clinical-50/30');
+                btn.classList.add('border-slate-200');
+                btn.querySelector('.dot-radio').classList.add('hidden');
+                btn.querySelector('.container-radio').classList.remove('border-clinical-600');
+            });
+
+            buttonElement.classList.add('border-clinical-600', 'bg-clinical-50/30');
+            buttonElement.classList.remove('border-slate-200');
+            buttonElement.querySelector('.dot-radio').classList.remove('hidden');
+            buttonElement.querySelector('.container-radio').classList.add('border-clinical-600');
+
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.className = "px-6 py-3 bg-clinical-600 text-white font-semibold rounded-xl hover:bg-clinical-700 shadow-md shadow-clinical-600/20 transition duration-150 flex items-center space-x-2 text-sm uppercase tracking-wider";
+        }
+
+        // CONTROL: Submit current answer and route to next
+        function submitAnswer() {
+            if (selectedOptionIndex === null) return;
+
+            const currentQ = questions[currentQuestionIndex];
+            const chosenAnswer = currentQ.options[selectedOptionIndex];
+            
+            const isCorrect = chosenAnswer === currentQ.correct;
+            if (isCorrect) {
+                playSound('success');
+            } else {
+                playSound('failure');
+            }
+
+            userAnswers.push({
+                questionText: currentQ.text,
+                userAnswer: chosenAnswer,
+                correctAnswer: currentQ.correct,
+                isCorrect: isCorrect,
+                domain: currentQ.domain
+            });
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // CONTROL: Calculate Score, Display Clinician Feedback, and Trigger Firebase Sinc
+        function showResults() {
+            stepQuiz.classList.add('hidden');
+            stepResults.classList.remove('hidden');
+
+            const total = questions.length;
+            const correctCount = userAnswers.filter(a => a.isCorrect).length;
+            const pct = Math.round((correctCount / total) * 100);
+
+            // Calculate precise execution duration in seconds
+            const elapsedSeconds = exerciseStartTime ? Math.round((Date.now() - exerciseStartTime) / 1000) : 0;
+
+            // Circular progress animation
+            document.getElementById('score-text').textContent = `${correctCount}/${total}`;
+            const circle = document.getElementById('score-circle');
+            const circumference = 2 * Math.PI * 70; 
+            const offset = circumference - (pct / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Score classification
+            let rating = '';
+            let neuropsychFeedback = '';
+            if (pct === 100) {
+                rating = 'Prestazione Ottimale (Eccellente)';
+                neuropsychFeedback = 'Straordinaria capacità di immagazzinamento visuo-spaziale ed eccellente stabilità attentiva. L\'ancoraggio visivo dei dettagli è rapido ed efficace. Le tue funzioni esecutive non mostrano alcuna deflessione visibile.';
+            } else if (pct >= 70) {
+                rating = 'Prestazione Buona (Preservata)';
+                neuropsychFeedback = 'Buon livello di vigilanza ed elaborazione dei dettagli. La memoria di lavoro trattiene le informazioni chiave anche in contesti moderatamente complessi. Continua così per mantenere flessibile ed elastica la tua riserva cognitiva.';
+            } else if (pct >= 50) {
+                rating = 'Prestazione Lievemente Deficitaria (Sotto Soglia)';
+                neuropsychFeedback = 'Si evidenzia qualche incertezza nel recupero attivo a breve termine o una vulnerabilità ad elementi distrattori ambientali. Ti consigliamo di ripetere l\'esercizio a difficoltà media rallentando l\'esplorazione oculare in modo sistematico.';
+            } else {
+                rating = 'Prestazione Deficitaria (Richiede Allenamento)';
+                neuropsychFeedback = 'Il carico cognitivo imposto ha superato la capacità di ritenzione momentanea. Questo è del tutto normale: la memoria visiva richiede allenamento continuo per ottimizzare le proprie strategie di codifica semantica degli oggetti.';
+            }
+            document.getElementById('clinical-rating').textContent = `Classificazione: ${rating}`;
+            document.getElementById('neuropsych-feedback-text').innerHTML = `<strong>Valutazione Clinica:</strong> ${neuropsychFeedback}`;
+
+            // Domain analysis percentages
+            const attentionQuestions = userAnswers.filter(a => a.domain === 'attention');
+            const attentionCorrect = attentionQuestions.filter(a => a.isCorrect).length;
+            const attentionPct = attentionQuestions.length ? Math.round((attentionCorrect / attentionQuestions.length) * 100) : 100;
+
+            const spatialQuestions = userAnswers.filter(a => a.domain === 'spatial');
+            const spatialCorrect = spatialQuestions.filter(a => a.isCorrect).length;
+            const spatialPct = spatialQuestions.length ? Math.round((spatialCorrect / spatialQuestions.length) * 100) : 100;
+
+            document.getElementById('domain-attention').style.width = `${attentionPct}%`;
+            document.getElementById('domain-attention-pct').textContent = `${attentionPct}%`;
+            
+            document.getElementById('domain-spatial').style.width = `${spatialPct}%`;
+            document.getElementById('domain-spatial-pct').textContent = `${spatialPct}%`;
+
+            // Build Answers Comparison list
+            const feedbackContainer = document.getElementById('feedback-answers-container');
+            feedbackContainer.innerHTML = '';
+
+            userAnswers.forEach((ans, idx) => {
+                const isCorr = ans.isCorrect;
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-xl border ${isCorr ? 'border-emerald-100 bg-emerald-50/30' : 'border-rose-100 bg-rose-50/30'} flex items-start space-x-3`;
+                div.innerHTML = `
+                    <div class="mt-0.5 shrink-0">
+                        ${isCorr ? `
+                            <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        ` : `
+                            <svg class="h-5 w-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        `}
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-wide">Domanda ${idx+1}</p>
+                        <p class="text-sm font-semibold text-slate-800 my-1">${ans.questionText}</p>
+                        <p class="text-xs text-slate-600">
+                            La tua risposta: <strong class="${isCorr ? 'text-emerald-700' : 'text-rose-700'}">${ans.userAnswer}</strong>
+                        </p>
+                        ${!isCorr ? `<p class="text-xs text-slate-600 mt-0.5">Risposta corretta: <strong class="text-emerald-700">${ans.correctAnswer}</strong></p>` : ''}
+                    </div>
+                `;
+                feedbackContainer.appendChild(div);
+            });
+
+            // PREPARE AND DELIVER UNIFORM CLINICAL DATA STRUCTURE
+            const datiEsercizio = {
+                titolo: "Memoria Visuo-Spaziale & Attenzione", // Must match the data-title attribute in index.html
+                risultati: {
+                    risposteCorrette: correctCount,
+                    totaleDomande: total,
+                    percentualeAccuratezza: pct,
+                    tempoMedioS: elapsedSeconds,
+                    punteggio: correctCount
+                }
+            };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSessione = urlParams.get('sessione') === 'true';
+
+            if (isSessione) {
+                // Sinks the results directly to the active clinical workspace
+                if (typeof window.salvaDatiEsercizio === 'function') {
+                    window.salvaDatiEsercizio(datiEsercizio);
+                } else {
+                    console.warn("[NeuroTrain DB] Modulo salvataggio Firebase non inizializzato correttamente.");
+                    window.procediRedirect();
+                }
+            } else {
+                console.log("[NeuroTrain Standalone] Risultati sessione:", datiEsercizio);
+            }
+        }
+
+        // CONTROL: Restart game loop
+        function restartGame(keepDifficulty) {
+            playSound('click');
+            stepResults.classList.add('hidden');
+            
+            if (keepDifficulty) {
+                selectDifficulty(currentDifficulty);
+            } else {
+                stepDifficulty.classList.remove('hidden');
+                document.getElementById('btn-home').classList.add('hidden');
+            }
+        }
+
+        // Expose functions globally to maintain compatibility with inline handlers
+        window.selectDifficulty = selectDifficulty;
+        window.goHome = goHome;
+        window.goToQuiz = goToQuiz;
+        window.submitAnswer = submitAnswer;
+        window.restartGame = restartGame;
+    </script>
 </body>
 </html>
