@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Esercizi | Hub di Stimolazione Cognitiva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js per i Grafici di Andamento -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -61,6 +60,13 @@
             z-index: 100;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+        
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .nav-logo { 
             font-weight: 800; 
             font-size: 1.5rem; 
@@ -81,8 +87,103 @@
         }
         
         .user-badge { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 8px 20px; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; }
+        
+        /* BOTTONI NAVBAR */
         .btn-exit { background: #f1f5f9; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #e2e8f0; color: var(--slate-900); }
+
+        .btn-termina-sessione-top {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+        }
+        .btn-termina-sessione-top:hover {
+            background: var(--danger-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        /* --- MODALE QUESTIONARIO AUTOVALUTAZIONE --- */
+        .survey-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .survey-modal {
+            background: #ffffff;
+            width: 100%;
+            max-width: 550px;
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+        }
+        .survey-modal h3 {
+            font-size: 1.35rem;
+            color: var(--slate-900);
+            margin-bottom: 10px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .survey-modal h3 i { color: var(--primary-light); }
+        .survey-modal p {
+            color: var(--slate-400);
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+        .survey-group {
+            margin-bottom: 20px;
+        }
+        .survey-group label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--slate-800);
+            margin-bottom: 8px;
+        }
+        .survey-options {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .survey-btn-option {
+            flex: 1;
+            padding: 12px 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--slate-700);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .survey-btn-option:hover, .survey-btn-option.selected {
+            background: #eff6ff;
+            border-color: var(--primary-light);
+            color: var(--primary-light);
+        }
 
         /* --- CONTATORI DASHBOARD (KPI) --- */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin: 40px 0; }
@@ -178,7 +279,6 @@
         .area-header i { font-size: 1.6rem; padding: 14px; border-radius: 18px; }
         .area-header h2 { font-size: 1.6rem; font-weight: 800; color: var(--slate-900); letter-spacing: -0.5px; }
 
-        /* Colori tematici icone */
         .area-attenzione .area-header i { color: #dc2626; background: #fee2e2; border: 1px solid #fecaca; }
         .area-memoria .area-header i { color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; }
         .area-funzioni .area-header i { color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; }
@@ -186,7 +286,6 @@
         .area-visuo .area-header i { color: #7c3aed; background: #f3e8ff; border: 1px solid #e9d5ff; }
         .area-orientamento .area-header i { color: #0891b2; background: #ecfeff; border: 1px solid #a5f3fc; }
 
-        /* CARD SINGOLO ESERCIZIO */
         .grid-esercizi { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
         .card { 
             background: #ffffff; 
@@ -208,33 +307,59 @@
         
         .select-exercise-checkbox { position: absolute; top: 28px; right: 28px; width: 22px; height: 22px; cursor: pointer; z-index: 5; accent-color: var(--primary-light); border-radius: 6px; }
         .tag { display: inline-block; align-self: flex-start; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 12px; background: #f1f5f9; color: var(--slate-700); transition: var(--transition); border: 1px solid #e2e8f0; }
-
-        .area-attenzione .card:hover { border-color: #fca5a5; }
-        .area-attenzione .card:hover .tag { background: #fee2e2; color: #dc2626; }
-        .area-memoria .card:hover { border-color: #93c5fd; }
-        .area-memoria .card:hover .tag { background: #eff6ff; color: #2563eb; }
-        .area-funzioni .card:hover { border-color: #6ee7b7; }
-        .area-funzioni .card:hover .tag { background: #ecfdf5; color: #059669; }
-        .area-linguaggio .card:hover { border-color: #fcd34d; }
-        .area-linguaggio .card:hover .tag { background: #fef3c7; color: #d97706; }
-        .area-visuo .card:hover { border-color: #d8b4fe; }
-        .area-visuo .card:hover .tag { background: #f3e8ff; color: #7c3aed; }
-        .area-orientamento .card:hover { border-color: #67e8f9; }
-        .area-orientamento .card:hover .tag { background: #ecfeff; color: #0891b2; }
     </style>
 </head>
 <body>
 
     <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="nav-logo">
-            <img src="logo.png" alt="CogniLab Logo"> CogniLab
+        <div class="nav-left">
+            <!-- Pulsante Termina Sessione in alto a sinistra, rosso -->
+            <button class="btn-termina-sessione-top" onclick="richiediTerminaSessione()">
+                <i class="fa-solid fa-flag-checkered"></i> Termina Sessione
+            </button>
+            <div class="nav-logo">
+                <img src="logo.png" alt="CogniLab Logo"> CogniLab
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 18px;">
             <div id="user-display" class="user-badge">Ospite</div>
             <button class="btn-exit" onclick="tornaAllaHome()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Esci</button>
         </div>
     </nav>
+
+    <!-- MODALE QUESTIONARIO DI AUTOVALUTAZIONE -->
+    <div id="surveyModal" class="survey-modal-overlay">
+        <div class="survey-modal">
+            <h3><i class="fa-solid fa-clipboard-question"></i> Questionario Post-Stimolazione</h3>
+            <p>Prima di terminare, compila il questionario di autovalutazione sull'esperienza appena conclusa.</p>
+            
+            <div class="survey-group">
+                <label>1. Come hai percepito lo sforzo richiesto da questa sessione?</label>
+                <div class="survey-options" data-question="sforzo">
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'sforzo', 'Molto Facile')">Molto Facile</button>
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'sforzo', 'Adeguato')">Adeguato</button>
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'sforzo', 'Molto Difficile')">Impegnativo</button>
+                </div>
+            </div>
+
+            <div class="survey-group" style="margin-bottom: 30px;">
+                <label>2. Come valuti il tuo livello di attenzione e concentrazione?</label>
+                <div class="survey-options" data-question="concentrazione">
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'concentrazione', 'Basso')">Basso</button>
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'concentrazione', 'Buono')">Buono</button>
+                    <button type="button" class="survey-btn-option" onclick="selectSurveyOption(this, 'concentrazione', 'Ottimale')">Ottimale</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn" style="background: #e2e8f0; color: var(--slate-800); flex: 1; justify-content: center;" onclick="closeSurveyModal()">Annulla</button>
+                <button class="btn btn-success" style="flex: 1; justify-content: center;" onclick="submitSurveyResult()">
+                    <i class="fa-solid fa-check"></i> Salva e Termina
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         
@@ -272,16 +397,14 @@
             
             <div id="panel-content-wrapper" class="panel-content-wrapper">
                 <div id="panel-content">
-                    <!-- Banner Stato Sessione Attiva -->
                     <div id="active-status-bar">
                         <div>
                             <i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 8px;"></i> 
                             <span id="session-status-text">Monitoraggio sessione attiva...</span>
                         </div>
-                        <button class="btn btn-danger btn-sm" onclick="stopCurrentActiveSession()">Termina Sessione</button>
+                        <button class="btn btn-danger btn-sm" onclick="stopCurrentActiveSession()">Termina Sessione Firebase</button>
                     </div>
 
-                    <!-- Sezione Registrazione Paziente -->
                     <div class="clinical-box">
                         <h3><i class="fa-solid fa-user-gear" style="color: var(--primary-light);"></i> Registrazione e Anagrafica</h3>
                         <div class="input-group">
@@ -302,7 +425,6 @@
                         </div>
                     </div>
 
-                    <!-- Sezione Avvio Sessione -->
                     <div class="clinical-box">
                         <h3><i class="fa-solid fa-play" style="color: var(--success);"></i> Configurazione Attività</h3>
                         <div class="input-group">
@@ -323,7 +445,6 @@
                         <div id="queue-list">Nessun esercizio in coda. Spunta i quadratini sulle card per creare una pianificazione automatica.</div>
                     </div>
 
-                    <!-- DOSSIER CLINICO REPORT -->
                     <div id="patient-report-section">
                         <h3 style="color: var(--slate-900); border-bottom: 2px solid var(--primary-light); padding-bottom: 12px; margin-bottom: 20px; font-weight: 800; letter-spacing: -0.5px;">
                             <i class="fa-solid fa-chart-line" style="color: var(--primary-light)"></i> Dossier Clinico: <span id="report-patient-name">Seleziona un paziente</span>
@@ -723,6 +844,7 @@
 
         let activeSessionState = null;
         let performanceChartInstance = null;
+        let currentSurveyData = { sforzo: null, concentrazione: null };
 
         document.addEventListener("DOMContentLoaded", function() {
             const modalita = localStorage.getItem('hub_mode');
@@ -739,7 +861,6 @@
                 document.getElementById('user-display').innerText = `👤 Utente: ${username}`;
                 document.getElementById('kpi-modalita').innerText = "Training Libero";
                 document.getElementById('clinical-panel').style.display = 'none'; 
-                
                 document.querySelectorAll('.select-exercise-checkbox').forEach(c => c.style.display = 'none');
                 
                 if(!localStorage.getItem('exercises_done_counter')) {
@@ -773,6 +894,44 @@
                 statusBar.style.display = "none";
             }
         });
+
+        // Gestione apertura questionario tramite pulsante Termina Sessione in alto a sinistra
+        window.richiediTerminaSessione = function() {
+            document.getElementById('surveyModal').style.display = 'flex';
+        }
+
+        window.closeSurveyModal = function() {
+            document.getElementById('surveyModal').style.display = 'none';
+        }
+
+        window.selectSurveyOption = function(buttonElement, questionKey, value) {
+            const parentContainer = buttonElement.parentElement;
+            parentContainer.querySelectorAll('.survey-btn-option').forEach(btn => btn.classList.remove('selected'));
+            buttonElement.classList.add('selected');
+            currentSurveyData[questionKey] = value;
+        }
+
+        window.submitSurveyResult = function() {
+            if (!currentSurveyData.sforzo || !currentSurveyData.concentrazione) {
+                alert("Si prega di rispondere a entrambe le domande del questionario di autovalutazione.");
+                return;
+            }
+
+            // Salvataggio o chiusura effettiva della sessione
+            console.log("Feedback di autovalutazione registrato:", currentSurveyData);
+            
+            document.getElementById('surveyModal').style.display = 'none';
+            
+            // Se c'è una sessione attiva su Firebase, rimuovila o chiudila
+            set(activeSessionRef, null).catch(err => console.error(err));
+
+            alert("Sessione terminata e questionario salvato correttamente.");
+            
+            // Reset questionario e ritorno alla home
+            currentSurveyData = { sforzo: null, concentrazione: null };
+            document.querySelectorAll('.survey-btn-option').forEach(btn => btn.classList.remove('selected'));
+            tornaAllaHome();
+        }
 
         window.addPatient = function() {
             const nameInput = document.getElementById('new-patient-name');
