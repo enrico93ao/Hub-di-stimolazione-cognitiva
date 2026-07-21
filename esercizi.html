@@ -52,75 +52,27 @@
         .star-rating label:hover,
         .star-rating label:hover ~ label { color: #f59e0b; }
 
-        /* =========================================
-           OTTIMIZZAZIONE MOBILE E TABLET (Responsive)
-           ========================================= */
         @media (max-width: 768px) {
-            #top-bar { 
-                height: auto; 
-                min-height: 80px; 
-                flex-direction: column; 
-                padding: 10px; 
-                gap: 10px; 
-            }
-            
-            .top-bar-left, .top-bar-right, .top-bar-center { 
-                width: 100%; 
-                justify-content: center; 
-                flex: none; 
-            }
-            
-            .top-bar-right {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .logo-container img { 
-                max-height: 50px; 
-            }
-
-            #exercise-title { 
-                font-size: 0.95rem; 
-                text-align: center; 
-            }
-
-            .btn-action { 
-                width: 100%; 
-                justify-content: center; 
-                padding: 12px; 
-                font-size: 1rem; 
-            }
-
-            .results-box { 
-                padding: 20px; 
-                margin: 10px; 
-                border-radius: 16px; 
-            }
-            
-            .results-box h2 { 
-                font-size: 1.5rem; 
-            }
-
-            .feedback-item { 
-                flex-direction: column; 
-                align-items: flex-start; 
-                gap: 8px; 
-                margin-bottom: 20px; 
-            }
-            
-            .star-rating label { 
-                font-size: 2rem; 
-            }
+            #top-bar { height: auto; min-height: 80px; flex-direction: column; padding: 10px; gap: 10px; }
+            .top-bar-left, .top-bar-right, .top-bar-center { width: 100%; justify-content: center; flex: none; }
+            .top-bar-right { flex-direction: column; gap: 8px; }
+            .logo-container img { max-height: 50px; }
+            #exercise-title { font-size: 0.95rem; text-align: center; }
+            .btn-action { width: 100%; justify-content: center; padding: 12px; font-size: 1rem; }
+            .results-box { padding: 20px; margin: 10px; border-radius: 16px; }
+            .results-box h2 { font-size: 1.5rem; }
+            .feedback-item { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px; }
+            .star-rating label { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <!-- Sezione Sinistra: Tasto Prossimo Esercizio -->
+        <!-- Sezione Sinistra: Tasto Scegli / Prossimo Esercizio -->
         <div class="top-bar-left">
             <button class="btn-action btn-next" id="next-exercise-btn" onclick="nextExercise()">
-                <i class="fa-solid fa-arrow-right"></i> Prossimo Esercizio
+                <i class="fa-solid fa-list"></i> Scegli Esercizio
             </button>
         </div>
 
@@ -148,11 +100,8 @@
             <h2><i class="fa-solid fa-square-poll-vertical"></i> Sessione Conclusa!</h2>
             <p id="paziente-concluso" style="font-size: 1.1rem; color: #64748b; margin-bottom: 15px;"></p>
             
-            <ul class="results-list" id="final-stats">
-                <!-- Esercizi completati -->
-            </ul>
+            <ul class="results-list" id="final-stats"></ul>
 
-            <!-- Modulo di Feedback Clinico / Soggettivo -->
             <div class="feedback-section">
                 <h3>Valutazione della Sessione</h3>
                 
@@ -202,7 +151,7 @@
             </div>
 
             <button class="btn-action btn-next" style="font-size: 1.1rem; padding: 12px 30px; margin-top: 20px; width: 100%; justify-content: center;" onclick="concludiESalvaFeedback()">
-                Salva e Torna all'Hub
+                Salva e Torna alla Home
             </button>
         </div>
     </div>
@@ -235,16 +184,16 @@
             const fileDirect = params.get('file');
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
-            // Se è stato passato un file direttamente nell'URL (Esercizio Singolo / Libero)
+            // 1. Se viene passato un file diretto nell'URL
             if (fileDirect) {
                 const esFile = decodeURIComponent(fileDirect);
                 document.getElementById('exercise-iframe').src = esFile;
                 document.getElementById('exercise-title').textContent = `${localUsername} ➔ Esercizio`;
-                document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
+                document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Esercizio';
                 return; 
             }
 
-            // Altrimenti controlliamo se c'è una sessione attiva da database
+            // 2. Controllo sessione su Firebase
             try {
                 const sessionRef = ref(db, 'sessione_attiva');
                 const snapshot = await get(sessionRef);
@@ -253,20 +202,20 @@
                     activeSession = snapshot.val();
                     
                     if (activeSession.tipo === 'libera') {
-                        document.getElementById('exercise-iframe').style.display = "none";
+                        // Se è una sessione libera avviata dall'area clinica senza file diretto, reindirizziamo alla scelta o apriamo un menu
                         document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome}`;
-                        document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Altro Esercizio';
+                        document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Esercizio';
                     } else {
                         isSessionPianificata = true;
                         loadCurrentExerciseFromSession();
                     }
                 } else {
-                    // Se non ci sono sessioni attive né file, rimaniamo su questa pagina o mostriamo uno stato vuoto invece di fare loop su index.html
-                    document.getElementById('exercise-title').textContent = "Pronto per l'allenamento";
-                    document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Esercizio';
+                    // Se arrivi qui senza file e senza sessione attiva, reindirizziamo direttamente alla home (index.html) in modo pulito
+                    window.location.href = "index.html";
                 }
             } catch (error) {
                 console.error("Errore di connessione a Firebase:", error);
+                window.location.href = "index.html";
             }
         });
 
@@ -287,22 +236,9 @@
             return t || "Esercizio";
         }
 
-        window.nextExercise = async function() {
-            if (activeSession && activeSession.tipo !== 'libera' && isSessionPianificata) {
-                const index = activeSession.indiceCorrente;
-                const sessionRef = ref(db, 'sessione_attiva');
-                const nuovoIndice = index + 1;
-                
-                await update(sessionRef, {
-                    indiceCorrente: nuovoIndice
-                });
-
-                activeSession.indiceCorrente = nuovoIndice;
-                loadCurrentExerciseFromSession();
-            } else {
-                // In modalità libera o singola, ricarica la pagina degli esercizi in modo pulito (senza parametri nell'URL)
-                window.location.href = "esercizi.html";
-            }
+        window.nextExercise = function() {
+            // Cliccando su "Scegli Esercizio" si torna alla landing page o alla scelta
+            window.location.href = "index.html";
         }
 
         window.requestEndSession = async function() {
@@ -373,8 +309,8 @@
                 }
             }
 
-            // CORRETTO: Ora riporta correttamente alla pagina degli esercizi e non alla landing page iniziale
-            window.location.href = "esercizi.html";
+            // Riporta correttamente alla landing page iniziale dopo il salvataggio
+            window.location.href = "index.html";
         }
     </script>
 </body>
