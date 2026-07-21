@@ -31,6 +31,9 @@
         
         .btn-danger { background-color: #ffeeef; color: #dc2626; border-color: #fecaca; }
         .btn-danger:hover { background-color: #fef2f2; color: #b91c1c; }
+
+        .btn-libero { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .btn-libero:hover { background-color: #dbeafe; color: #1d4ed8; }
         
         #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; }
         #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 80px); border: none; background: #ffffff; }
@@ -46,7 +49,7 @@
 <body>
 
     <div id="top-bar">
-        <!-- Sezione Sinistra: Pulsante Termina/Indietro -->
+        <!-- Sezione Sinistra: Pulsante Dinamico (Scegli successivo o Termina Sessione) -->
         <div class="top-bar-left">
             <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
                 <i class="fa-solid fa-arrow-left"></i> Termina Sessione
@@ -71,7 +74,7 @@
 
     <iframe id="exercise-iframe" src=""></iframe>
 
-    <!-- Schermata di Fine Sessione -->
+    <!-- Schermata di Fine Sessione (Usata per le pianificate) -->
     <div id="results-screen">
         <div class="results-box">
             <h2><i class="fa-solid fa-square-poll-vertical"></i> Sessione Conclusa!</h2>
@@ -124,7 +127,14 @@
                         const esFile = decodeURIComponent(fileDirect);
                         document.getElementById('exercise-iframe').src = esFile;
                         document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero: ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-                        document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-check"></i> Salva e Torna';
+                        
+                        // Modifica per il Training Libero: pulsante per scegliere l'esercizio successivo anziché terminare
+                        const btnBack = document.getElementById('back-home-btn');
+                        btnBack.className = "btn-action btn-libero";
+                        btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Scegli l\'esercizio successivo';
+                        btnBack.onclick = function() {
+                            window.location.href = "esercizi.html";
+                        };
                     } else {
                         window.location.href = "esercizi.html";
                     }
@@ -137,7 +147,13 @@
                     const esFile = decodeURIComponent(fileDirect);
                     document.getElementById('exercise-iframe').src = esFile;
                     document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-                    document.getElementById('back-home-btn').innerHTML = '<i class="fa-solid fa-arrow-left"></i> Termina Allenamento';
+                    
+                    const btnBack = document.getElementById('back-home-btn');
+                    btnBack.className = "btn-action btn-libero";
+                    btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Scegli l\'esercizio successivo';
+                    btnBack.onclick = function() {
+                        window.location.href = "esercizi.html";
+                    };
                 } else {
                     window.location.href = "esercizi.html";
                 }
@@ -181,59 +197,48 @@
                 return;
             }
 
-            if (activeSession.tipo === 'libera') {
-                const params = new URLSearchParams(window.location.search);
-                const fileDirect = params.get('file');
-                const esTitle = fileDirect ? decodeURIComponent(fileDirect).replace('.html', '').replace(/_/g, ' ') : "Esercizio Libero";
-
-                const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
-                await push(storicoRef, {
-                    data: new Date().toISOString(),
-                    tipo: "Esercizio Libero",
-                    eserciziSvolti: [{ titolo: esTitle, file: fileDirect || "" }]
-                });
-            } else if (isSessionPianificata) {
+            if (isSessionPianificata) {
                 const completati = activeSession.esercizi.slice(0, activeSession.indiceCorrente);
                 if (completati.length > 0) {
                     const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
                     await push(storicoRef, {
-                        data: new Date().toISOString(),
-                        tipo: "Sessione Pianificata Interrotta",
-                        eserciziSvolti: completati
-                    });
-                }
-                await set(ref(db, 'sessione_attiva'), null);
+                    data: new Date().toISOString(),
+                    tipo: "Sessione Pianificata Interrotta",
+                    eserciziSvolti: completati
+                });
             }
-            window.location.href = "esercizi.html";
+            await set(ref(db, 'sessione_attiva'), null);
         }
+        window.location.href = "esercizi.html";
+    }
 
-        function showFinalResults() {
-            document.getElementById('exercise-iframe').style.display = "none";
-            document.getElementById('top-bar').style.display = "none";
-            
-            const resultsScreen = document.getElementById('results-screen');
-            resultsScreen.style.display = "flex";
-            
-            document.getElementById('paziente-concluso').textContent = `Paziente: ${activeSession.pazienteNome}`;
-            
-            const list = document.getElementById('final-stats');
-            list.innerHTML = "";
-            
-            activeSession.esercizi.forEach((es, i) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
-                list.appendChild(li);
-            });
+    function showFinalResults() {
+        document.getElementById('exercise-iframe').style.display = "none";
+        document.getElementById('top-bar').style.display = "none";
+        
+        const resultsScreen = document.getElementById('results-screen');
+        resultsScreen.style.display = "flex";
+        
+        document.getElementById('paziente-concluso').textContent = `Paziente: ${activeSession.pazienteNome}`;
+        
+        const list = document.getElementById('final-stats');
+        list.innerHTML = "";
+        
+        activeSession.esercizi.forEach((es, i) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
+            list.appendChild(li);
+        });
 
-            const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
-            push(storicoRef, {
-                data: new Date().toISOString(),
-                tipo: "Sessione Pianificata Completa",
-                eserciziSvolti: activeSession.esercizi
-            }).then(async () => {
-                await set(ref(db, 'sessione_attiva'), null);
-            });
-        }
-    </script>
+        const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
+        push(storicoRef, {
+            data: new Date().toISOString(),
+            tipo: "Sessione Pianificata Completa",
+            eserciziSvolti: activeSession.esercizi
+        }).then(async () => {
+            await set(ref(db, 'sessione_attiva'), null);
+        });
+    }
+</script>
 </body>
 </html>
