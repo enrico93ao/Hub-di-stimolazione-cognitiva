@@ -261,12 +261,12 @@
                         loadCurrentExerciseFromSession();
                     }
                 } else {
-                    // Nessuna sessione attiva e nessun file specificato: torniamo alla home in modo sicuro
-                    window.location.href = "index.html";
+                    // Se non ci sono sessioni attive né file, rimaniamo su questa pagina o mostriamo uno stato vuoto invece di fare loop su index.html
+                    document.getElementById('exercise-title').textContent = "Pronto per l'allenamento";
+                    document.getElementById('next-exercise-btn').innerHTML = '<i class="fa-solid fa-list"></i> Scegli Esercizio';
                 }
             } catch (error) {
                 console.error("Errore di connessione a Firebase:", error);
-                window.location.href = "index.html";
             }
         });
 
@@ -288,7 +288,7 @@
         }
 
         window.nextExercise = async function() {
-            if (activeSession && activeSession.tipo !== 'libera') {
+            if (activeSession && activeSession.tipo !== 'libera' && isSessionPianificata) {
                 const index = activeSession.indiceCorrente;
                 const sessionRef = ref(db, 'sessione_attiva');
                 const nuovoIndice = index + 1;
@@ -300,7 +300,7 @@
                 activeSession.indiceCorrente = nuovoIndice;
                 loadCurrentExerciseFromSession();
             } else {
-                // In modalità libera, riporta alla pagina principale senza ricaricare in loop
+                // In modalità libera o singola, ricarica la pagina degli esercizi in modo pulito (senza parametri nell'URL)
                 window.location.href = "esercizi.html";
             }
         }
@@ -373,7 +373,8 @@
                 }
             }
 
-            window.location.href = "index.html";
+            // CORRETTO: Ora riporta correttamente alla pagina degli esercizi e non alla landing page iniziale
+            window.location.href = "esercizi.html";
         }
     </script>
 </body>
