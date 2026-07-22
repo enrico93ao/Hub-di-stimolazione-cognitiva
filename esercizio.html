@@ -224,7 +224,7 @@
         }
     </script>
 
-    <!-- Script per la gestione dell'iframe (rimozione barra interna ed eventuale avvio automatico) -->
+    <!-- Script per rimuovere la barra interna duplicata dall'iframe -->
     <script>
         document.getElementById('exercise-iframe').addEventListener('load', function() {
             try {
@@ -234,16 +234,6 @@
                 const internalTopBar = iframeDoc.querySelector('#top-bar, header, .navbar, .top-header');
                 if (internalTopBar) {
                     internalTopBar.style.display = 'none';
-                }
-
-                // Cerca ed esegue il pulsante di avvio se presente nella pagina interna
-                const startBtn = iframeDoc.querySelector('#start-btn') || 
-                                 iframeDoc.querySelector('button[id*="avvia"]') || 
-                                 iframeDoc.querySelector('.btn-start') ||
-                                 iframeDoc.querySelector('button');
-                                 
-                if (startBtn && (startBtn.textContent.includes('Avvia') || startBtn.textContent.includes('Inizia'))) {
-                    startBtn.click();
                 }
             } catch (e) {
                 console.log("Impossibile accedere al DOM dell'iframe a causa di restrizioni cross-origin.");
