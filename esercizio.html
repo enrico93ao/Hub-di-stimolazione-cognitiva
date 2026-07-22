@@ -34,6 +34,17 @@
             min-height: 100vh; 
             display: flex;
             flex-direction: column;
+            /* Gestione transizione fluida iniziale e in uscita */
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        body.fade-out {
+            opacity: 0;
         }
 
         /* --- NAVBAR COERENTE CON LA DASHBOARD --- */
@@ -120,58 +131,21 @@
             display: flex;
             flex-direction: column;
             min-height: 75vh;
-            position: relative; /* Necessario per posizionare il loader */
+            position: relative;
         }
 
-        /* --- TRANSIZIONE E LOADER DELL'IFRAME --- */
-        .exercise-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            z-index: 10;
-            transition: opacity 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .exercise-loader.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid var(--primary-light);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--slate-700);
-        }
-
+        /* --- TRANSIZIONE FLUIDA DELL'IFRAME --- */
         iframe {
             width: 100%;
             height: 100%;
             border: none;
             flex-grow: 1;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        iframe.loaded {
+            opacity: 1;
         }
     </style>
 </head>
@@ -202,7 +176,7 @@
     <!-- NAVBAR SINCRONIZZATA CON LA DASHBOARD -->
     <nav class="navbar">
         <div class="nav-left-cluster">
-            <a href="esercizi.html" class="btn-exit"><i class="fa-solid fa-arrow-left"></i> Torna alla Dashboard</a>
+            <a href="#" class="btn-exit" onclick="tornaAllaDashboard(event)"><i class="fa-solid fa-arrow-left"></i> Torna alla Dashboard</a>
         </div>
         <div class="nav-right-cluster">
             <div class="global-timer-badge" id="global-timer">
@@ -218,16 +192,16 @@
     <!-- WORKSPACE ESERCIZIO -->
     <div class="exercise-workspace">
         <div class="iframe-container">
-            <!-- Loader di transizione fluido -->
-            <div id="exercise-loader" class="exercise-loader active">
-                <div class="spinner"></div>
-                <div class="loading-text">Caricamento esercizio in corso...</div>
-            </div>
             <iframe id="exercise-frame" src="" title="Area Esercizio Cognitivo"></iframe>
         </div>
     </div>
 
     <script>
+        // Effetto dissolvenza in entrata sulla pagina
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('loaded');
+        });
+
         // --- GESTIONE CRONOMETRO GLOBALE PERSISTENTE (Aggiornamento continuo) ---
         function updateGlobalTimer() {
             let globalStartTime = localStorage.getItem('global_timer_start');
@@ -261,11 +235,7 @@
                 document.getElementById('user-display').innerText = `👤 Utente: ${username}`;
             }
 
-            const loader = document.getElementById('exercise-loader');
             const iframe = document.getElementById('exercise-frame');
-
-            // Mostra il loader all'avvio
-            loader.classList.add('active');
 
             // Recupera il file dell'esercizio dai parametri URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -274,22 +244,30 @@
             if (exerciseFile) {
                 iframe.src = decodeURIComponent(exerciseFile);
             } else {
-                // Se aperto da sessione pianificata o senza parametro diretto
                 iframe.src = "Attenzione%20alternata.html"; 
             }
 
-            // Nascondi il loader non appena l'iframe ha finito di caricare
+            // Attiva la dissolvenza dolce non appena l'iframe si carica
             iframe.addEventListener('load', function() {
-                setTimeout(() => {
-                    loader.classList.remove('active');
-                }, 200);
+                iframe.classList.add('loaded');
             });
         });
+
+        function tornaAllaDashboard(e) {
+            e.preventDefault();
+            document.body.classList.add('fade-out');
+            setTimeout(() => {
+                window.location.href = 'esercizi.html';
+            }, 400);
+        }
 
         function terminaSessioneGlobale() {
             if (confirm("Vuoi concludere l'allenamento di oggi e tornare alla schermata principale?")) {
                 localStorage.removeItem('global_timer_start');
-                window.location.href = 'index.html';
+                document.body.classList.add('fade-out');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 400);
             }
         }
     </script>
