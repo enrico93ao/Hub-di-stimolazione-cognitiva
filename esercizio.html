@@ -79,6 +79,7 @@
         </div>
     </div>
 
+    <!-- Firebase SDK e Logica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, get, set, update, push } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -106,7 +107,6 @@
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
             if (fileDirect) {
-                // Modalità Esercizio Singolo / Diretto immediato
                 const esFile = decodeURIComponent(fileDirect);
                 document.getElementById('exercise-iframe').src = esFile;
                 document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
@@ -117,7 +117,7 @@
                 btnBack.onclick = function() {
                     window.location.href = "esercizi.html";
                 };
-                return; // Interrompiamo qui per evitare attese o conflitti con Firebase se si naviga in modo singolo
+                return;
             }
 
             try {
@@ -222,6 +222,26 @@
                 await set(ref(db, 'sessione_attiva'), null);
             });
         }
+    </script>
+
+    <!-- Script per bypassare automaticamente la modale di avvio interna all'iframe se presente -->
+    <script>
+        document.getElementById('exercise-iframe').addEventListener('load', function() {
+            try {
+                const iframeDoc = this.contentWindow.document;
+                const startBtn = iframeDoc.querySelector('#start-btn') || 
+                                 iframeDoc.querySelector('button[id*="avvia"]') || 
+                                 iframeDoc.querySelector('.btn-start') ||
+                                 iframeDoc.querySelector('button');
+                                 
+                if (startBtn && (startBtn.textContent.includes('Avvia') || startBtn.textContent.includes('Inizia'))) {
+                    startBtn.click();
+                }
+            } catch (e) {
+                // Gestione cross-origin o restrizioni di sicurezza del browser
+                console.log("Impossibile automatizzare il click interno direttamente via script.");
+            }
+        });
     </script>
 </body>
 </html>
