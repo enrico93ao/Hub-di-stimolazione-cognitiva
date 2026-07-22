@@ -1,341 +1,187 @@
 <!DOCTYPE html>
-
 <html lang="it">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Esercizio - Hub Cognitivo</title>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; background-color: #f8fafc; }
-
         
-
         #top-bar { height: 80px; background-color: #ffffff; color: #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
-
         
-
         .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; gap: 15px; }
-
         .top-bar-right { justify-content: flex-end; }
-
         .top-bar-center { flex: 1; display: flex; justify-content: center; align-items: center; }
-
         
-
         .logo-container img {
-
             max-height: 65px;
-
             width: auto;
-
             object-fit: contain;
-
         }
 
-
-
         .btn-action { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-
         .btn-action:hover { background-color: #e2e8f0; color: #0f172a; }
-
         
-
         .btn-next { background-color: #10b981; color: white; border: none; }
-
         .btn-next:hover { background-color: #059669; color: white; }
-
         
-
         .btn-danger { background-color: #ffeeef; color: #dc2626; border-color: #fecaca; }
-
         .btn-danger:hover { background-color: #fef2f2; color: #b91c1c; }
 
-
-
         .btn-libero { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-
         .btn-libero:hover { background-color: #dbeafe; color: #1d4ed8; }
 
-
-
         #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; text-align: right; }
-
         #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 80px); border: none; background: #ffffff; }
-
     </style>
-
 </head>
-
 <body>
 
-
-
     <div id="top-bar">
-
         <div class="top-bar-left">
-
             <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
-
-                <i class="fa-solid fa-arrow-left"></i> Torna all'Hub
-
+                <i class="fa-solid fa-arrow-left"></i> <span id="back-btn-text">Torna all'Hub</span>
             </button>
-
         </div>
-
-
 
         <div class="top-bar-center">
-
             <div class="logo-container">
-
                 <img src="logo.png" alt="Logo Hub Cognitivo">
-
             </div>
-
         </div>
-
-
 
         <div class="top-bar-right">
-
             <div id="exercise-title">Caricamento in corso...</div>
-
             <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
-
                 Avanti <i class="fa-solid fa-arrow-right"></i>
-
             </button>
-
         </div>
-
     </div>
-
-
 
     <iframe id="exercise-iframe" src=""></iframe>
 
-
-
     <!-- Firebase SDK e Logica per il caricamento dell'esercizio -->
-
     <script type="module">
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-
         import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
 
-
-
         const firebaseConfig = {
-
             apiKey: "AIzaSyBBChH3sFfhwE4waQTzERtKGytJrucYEFM",
-
             authDomain: "hub-di-stimolazione-cognitiva.firebaseapp.com",
-
             databaseURL: "https://hub-di-stimolazione-cognitiva-default-rtdb.firebaseio.com",
-
             projectId: "hub-di-stimolazione-cognitiva",
-
             storageBucket: "hub-di-stimolazione-cognitiva.firebasestorage.app",
-
             messagingSenderId: "593673504352",
-
             appId: "1:593673504352:web:9d4a194109ec7061e6e505",
-
             measurementId: "G-6JTPBYQYPE"
-
         };
 
-
-
         const app = initializeApp(firebaseConfig);
-
         const db = getDatabase(app);
-
-
 
         let activeSession = null;
 
-
-
         window.addEventListener('DOMContentLoaded', async () => {
-
             const params = new URLSearchParams(window.location.search);
-
             const fileDirect = params.get('file');
-
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
+            const titleEl = document.getElementById('exercise-title');
+            const backBtn = document.getElementById('back-home-btn');
+            const backBtnText = document.getElementById('back-btn-text');
+            const nextBtn = document.getElementById('next-btn');
 
-
+            // 1. MODALITÀ TRAINING LIBERO (tramite parametro file nell'URL)
             if (fileDirect) {
-
                 const esFile = decodeURIComponent(fileDirect);
-
                 document.getElementById('exercise-iframe').src = esFile;
-
-                document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-
                 
+                const formattedName = esFile.replace('.html', '').replace(/_/g, ' ');
+                const exerciseReadableName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
 
-                const btnBack = document.getElementById('back-home-btn');
-
-                btnBack.className = "btn-action btn-libero";
-
-                btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Torna agli esercizi';
-
-                btnBack.onclick = function() {
-
+                // Mantiene continuità mostrando lo username e il contesto di training libero
+                titleEl.textContent = `${localUsername} (Libero) ➔ ${exerciseReadableName}`;
+                
+                // Configura il pulsante di ritorno per l'archivio esercizi
+                backBtn.className = "btn-action btn-libero";
+                backBtnText.textContent = "Torna agli esercizi";
+                backBtn.onclick = function() {
                     window.location.href = "esercizi.html";
-
                 };
-
+                nextBtn.style.display = "none";
                 return;
-
             }
 
-
-
+            // 2. MODALITÀ AREA CLINICA / GUIDATA (tramite Firebase)
             try {
-
                 const sessionRef = ref(db, 'sessione_attiva');
-
                 const snapshot = await get(sessionRef);
 
-
-
                 if (snapshot.exists()) {
-
                     activeSession = snapshot.val();
-
                     if (activeSession.tipo === 'libera') {
-
                         window.location.href = "esercizi.html";
-
                     } else {
-
                         loadCurrentExerciseFromSession();
-
                     }
-
                 } else {
-
                     window.location.href = "esercizi.html";
-
                 }
-
             } catch (error) {
-
                 console.error("Errore di connessione a Firebase:", error);
-
                 window.location.href = "esercizi.html";
-
             }
-
         });
-
-
 
         function loadCurrentExerciseFromSession() {
-
             if (!activeSession) return;
-
             const index = activeSession.indiceCorrente || 0;
-
             const esercizi = activeSession.esercizi;
 
-
-
             if (esercizi && index < esercizi.length) {
-
                 const esercizioAttivo = esercizi[index];
-
                 document.getElementById('exercise-iframe').src = esercizioAttivo.file;
-
-                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome || 'Paziente'} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
-
+                
+                // Mantiene continuità mostrando il nome del paziente e il progresso clinico
+                const nomePaziente = activeSession.pazienteNome || localStorage.getItem('hub_username') || 'Paziente';
+                document.getElementById('exercise-title').textContent = `${nomePaziente} (Clinica) ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
                 document.getElementById('next-btn').style.display = "inline-flex";
-
             } else {
-
                 window.location.href = "esercizi.html";
-
             }
-
         }
-
-
 
         window.nextStep = async function() {
-
             if (!activeSession) return;
-
             const index = activeSession.indiceCorrente;
-
             const sessionRef = ref(db, 'sessione_attiva');
-
             const nuovoIndice = index + 1;
-
             
-
             await update(sessionRef, { indiceCorrente: nuovoIndice });
-
             activeSession.indiceCorrente = nuovoIndice;
-
             loadCurrentExerciseFromSession();
-
         }
-
-
 
         window.exitSession = function() {
-
             window.location.href = "esercizi.html";
-
         }
-
     </script>
-
-
 
     <!-- Script per rimuovere la barra interna duplicata dall'iframe -->
-
     <script>
-
         document.getElementById('exercise-iframe').addEventListener('load', function() {
-
             try {
-
                 const iframeDoc = this.contentWindow.document;
-
                 const internalTopBar = iframeDoc.querySelector('#top-bar, header, .navbar, .top-header');
-
                 if (internalTopBar) {
-
                     internalTopBar.style.display = 'none';
-
                 }
-
             } catch (e) {
-
                 console.log("Impossibile accedere al DOM dell'iframe a causa di restrizioni cross-origin.");
-
             }
-
         });
-
     </script>
-
 </body>
-
 </html>
