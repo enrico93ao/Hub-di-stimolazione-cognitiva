@@ -88,10 +88,14 @@
             const fileDirect = params.get('file');
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
+            // Se viene passato un file direttamente (modalità libera da archivio)
             if (fileDirect) {
                 const esFile = decodeURIComponent(fileDirect);
                 document.getElementById('exercise-iframe').src = esFile;
-                document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
+                
+                // Mantiene la continuità visiva mostrando lo username coerente e il nome formattato dell'esercizio
+                const formattedName = esFile.replace('.html', '').replace(/_/g, ' ');
+                document.getElementById('exercise-title'].textContent = `${localUsername} ➔ ${formattedName.charAt(0).toUpperCase() + formattedName.slice(1)}`;
                 
                 const btnBack = document.getElementById('back-home-btn');
                 btnBack.className = "btn-action btn-libero";
@@ -102,6 +106,7 @@
                 return;
             }
 
+            // Altrimenti gestisce la sessione guidata da Firebase
             try {
                 const sessionRef = ref(db, 'sessione_attiva');
                 const snapshot = await get(sessionRef);
@@ -130,7 +135,10 @@
             if (esercizi && index < esercizi.length) {
                 const esercizioAttivo = esercizi[index];
                 document.getElementById('exercise-iframe').src = esercizioAttivo.file;
-                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome || 'Paziente'} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
+                
+                // Mantiene la continuità con il nome del paziente registrato nella sessione guidata
+                const nomePaziente = activeSession.pazienteNome || localStorage.getItem('hub_username') || 'Paziente';
+                document.getElementById('exercise-title').textContent = `${nomePaziente} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
                 document.getElementById('next-btn').style.display = "inline-flex";
             } else {
                 window.location.href = "esercizi.html";
