@@ -36,51 +36,17 @@
             color: var(--slate-900);
             overflow-x: hidden;
             position: relative;
-        }
-
-        /* --- LOADER DI TRANSIZIONE INIZIALE --- */
-        .page-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            z-index: 1000;
-            transition: opacity 0.4s ease;
+            /* Gestione transizione di pagina fluida */
             opacity: 0;
-            pointer-events: none;
+            transition: opacity 0.4s ease-in-out;
         }
 
-        .page-loader.active {
+        body.loaded {
             opacity: 1;
-            pointer-events: auto;
         }
 
-        .spinner {
-            width: 45px;
-            height: 45px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid var(--primary-light);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--slate-700);
+        body.fade-out {
+            opacity: 0;
         }
 
         /* --- HUB CENTRAL BOX --- */
@@ -95,8 +61,7 @@
             box-shadow: var(--shadow-premium);
             text-align: center;
             z-index: 10;
-            opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
             animation: premiumFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -350,12 +315,6 @@
 </head>
 <body>
 
-    <!-- Loader di transizione fluido -->
-    <div id="page-loader" class="page-loader">
-        <div class="spinner"></div>
-        <div id="loader-text" class="loading-text">Accesso all'area in corso...</div>
-    </div>
-
     <div class="welcome-container">
         <!-- Logo Inserito in Cima -->
         <div class="logo-container animate-item anim-delay-1">
@@ -414,6 +373,11 @@
         // Pulisce sessioni precedenti al caricamento della home
         localStorage.clear();
 
+        // --- EFFETTO FADE-IN AL CARICAMENTO DELLA PAGINA ---
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.add('loaded');
+        });
+
         // --- SCRIPT PER PAROLA DINAMICA ---
         const words = ["la mente", "la memoria", "l'attenzione", "la logica"];
         let currentIndex = 0;
@@ -430,7 +394,7 @@
         }, 3000); // Cambia ogni 3 secondi
 
 
-        // --- LOGICA MODALE ED ESERCIZI ---
+        // --- LOGICA MODALE ED ESERCIZI CON TRANSIZIONE DOLCE ---
         function openUserModal() {
             document.getElementById('user-modal').classList.add('active');
             document.getElementById('username-input').focus();
@@ -455,11 +419,8 @@
             localStorage.setItem('free_session_start', new Date().toISOString());
             localStorage.setItem('free_exercises_history', JSON.stringify([]));
 
-            // Mostra il loader di transizione prima di reindirizzare
-            const loader = document.getElementById('page-loader');
-            document.getElementById('loader-text').innerText = "Preparazione area di training...";
-            loader.classList.add('active');
-
+            // Transizione fluida in uscita (Fade-out)
+            document.body.classList.add('fade-out');
             setTimeout(() => {
                 window.location.href = 'esercizi.html';
             }, 400);
@@ -468,11 +429,8 @@
         function enterClinicalMode() {
             localStorage.setItem('hub_mode', 'clinical');
 
-            // Mostra il loader di transizione prima di reindirizzare
-            const loader = document.getElementById('page-loader');
-            document.getElementById('loader-text').innerText = "Accesso all'area clinica...";
-            loader.classList.add('active');
-
+            // Transizione fluida in uscita (Fade-out)
+            document.body.classList.add('fade-out');
             setTimeout(() => {
                 window.location.href = 'esercizi.html';
             }, 400);
