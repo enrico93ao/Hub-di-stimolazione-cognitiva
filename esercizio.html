@@ -11,12 +11,10 @@
         
         #top-bar { height: 80px; background-color: #ffffff; color: #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
         
-        /* Contenitori per bilanciare l'header a 3 sezioni (Sinistra, Centro, Destra) */
         .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; }
         .top-bar-right { justify-content: flex-end; gap: 10px; }
         .top-bar-center { flex: 1; display: flex; justify-content: center; align-items: center; }
         
-        /* Stile per il logo centrale ingrandito e completamente fuso con lo sfondo */
         .logo-container img {
             max-height: 65px;
             width: auto;
@@ -35,10 +33,9 @@
         .btn-libero { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
         .btn-libero:hover { background-color: #dbeafe; color: #1d4ed8; }
         
-        #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; }
+        #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; text-align: right; }
         #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 80px); border: none; background: #ffffff; }
         
-        /* Modal Risultati di Fine Sessione */
         #results-screen { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); z-index: 999; color: #0f172a; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
         .results-box { background: #ffffff; padding: 40px; border-radius: 24px; max-width: 600px; width: 100%; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); text-align: center; }
         .results-box h2 { font-size: 2rem; color: #2563eb; margin-bottom: 20px; }
@@ -49,21 +46,18 @@
 <body>
 
     <div id="top-bar">
-        <!-- Sezione Sinistra: Pulsante Dinamico (Scegli successivo o Termina Sessione) -->
         <div class="top-bar-left">
             <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
                 <i class="fa-solid fa-arrow-left"></i> Termina Sessione
             </button>
         </div>
 
-        <!-- Sezione Centrale: Logo Ingrandito e Fuso -->
         <div class="top-bar-center">
             <div class="logo-container">
                 <img src="logo.png" alt="Logo Hub Cognitivo">
             </div>
         </div>
 
-        <!-- Sezione Destra: Titolo esercizio e pulsante Avanti -->
         <div class="top-bar-right">
             <div id="exercise-title">Caricamento in corso...</div>
             <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
@@ -74,21 +68,17 @@
 
     <iframe id="exercise-iframe" src=""></iframe>
 
-    <!-- Schermata di Fine Sessione (Usata per le pianificate) -->
     <div id="results-screen">
         <div class="results-box">
             <h2><i class="fa-solid fa-square-poll-vertical"></i> Sessione Conclusa!</h2>
             <p id="paziente-concluso" style="font-size: 1.2rem; color: #64748b;"></p>
-            <ul class="results-list" id="final-stats">
-                <!-- Esercizi completati -->
-            </ul>
+            <ul class="results-list" id="final-stats"></ul>
             <button class="btn-action btn-next" style="font-size: 1.1rem; padding: 12px 30px;" onclick="window.location.href='esercizi.html'">
                 Torna all'Hub Centrale
             </button>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
         import { getDatabase, ref, get, set, update, push } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -113,61 +103,54 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const fileDirect = params.get('file');
-
             const localUsername = localStorage.getItem('hub_username') || "Utente";
 
-            const sessionRef = ref(db, 'sessione_attiva');
-            const snapshot = await get(sessionRef);
-
-            if (snapshot.exists()) {
-                activeSession = snapshot.val();
+            if (fileDirect) {
+                // Modalità Esercizio Singolo / Diretto immediato
+                const esFile = decodeURIComponent(fileDirect);
+                document.getElementById('exercise-iframe').src = esFile;
+                document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
                 
-                if (activeSession.tipo === 'libera') {
-                    if (fileDirect) {
-                        const esFile = decodeURIComponent(fileDirect);
-                        document.getElementById('exercise-iframe').src = esFile;
-                        document.getElementById('exercise-title').textContent = `Paziente: ${activeSession.pazienteNome} ➔ Esercizio Libero: ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
-                        
-                        // Modifica per il Training Libero: pulsante per scegliere l'esercizio successivo anziché terminare
-                        const btnBack = document.getElementById('back-home-btn');
-                        btnBack.className = "btn-action btn-libero";
-                        btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Scegli l\'esercizio successivo';
-                        btnBack.onclick = function() {
-                            window.location.href = "esercizi.html";
-                        };
-                    } else {
-                        window.location.href = "esercizi.html";
-                    }
-                } else {
-                    isSessionPianificata = true;
-                    loadCurrentExerciseFromSession();
-                }
-            } else {
-                if (fileDirect) {
-                    const esFile = decodeURIComponent(fileDirect);
-                    document.getElementById('exercise-iframe').src = esFile;
-                    document.getElementById('exercise-title').textContent = `${localUsername} ➔ ${esFile.replace('.html', '').replace(/_/g, ' ')}`;
+                const btnBack = document.getElementById('back-home-btn');
+                btnBack.className = "btn-action btn-libero";
+                btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Scegli l\'esercizio successivo';
+                btnBack.onclick = function() {
+                    window.location.href = "esercizi.html";
+                };
+                return; // Interrompiamo qui per evitare attese o conflitti con Firebase se si naviga in modo singolo
+            }
+
+            try {
+                const sessionRef = ref(db, 'sessione_attiva');
+                const snapshot = await get(sessionRef);
+
+                if (snapshot.exists()) {
+                    activeSession = snapshot.val();
                     
-                    const btnBack = document.getElementById('back-home-btn');
-                    btnBack.className = "btn-action btn-libero";
-                    btnBack.innerHTML = '<i class="fa-solid fa-list-check"></i> Scegli l\'esercizio successivo';
-                    btnBack.onclick = function() {
+                    if (activeSession.tipo === 'libera') {
                         window.location.href = "esercizi.html";
-                    };
+                    } else {
+                        isSessionPianificata = true;
+                        loadCurrentExerciseFromSession();
+                    }
                 } else {
                     window.location.href = "esercizi.html";
                 }
+            } catch (error) {
+                console.error("Errore di connessione a Firebase:", error);
+                window.location.href = "esercizi.html";
             }
         });
 
         function loadCurrentExerciseFromSession() {
-            const index = activeSession.indiceCorrente;
+            if (!activeSession) return;
+            const index = activeSession.indiceCorrente || 0;
             const esercizi = activeSession.esercizi;
 
             if (esercizi && index < esercizi.length) {
                 const esercizioAttivo = esercizi[index];
                 document.getElementById('exercise-iframe').src = esercizioAttivo.file;
-                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
+                document.getElementById('exercise-title').textContent = `${activeSession.pazienteNome || 'Paziente'} ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
                 document.getElementById('next-btn').style.display = "inline-flex";
             } else {
                 showFinalResults();
@@ -202,43 +185,43 @@
                 if (completati.length > 0) {
                     const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
                     await push(storicoRef, {
-                    data: new Date().toISOString(),
-                    tipo: "Sessione Pianificata Interrotta",
-                    eserciziSvolti: completati
-                });
+                        data: new Date().toISOString(),
+                        tipo: "Sessione Pianificata Interrotta",
+                        eserciziSvolti: completati
+                    });
+                }
+                await set(ref(db, 'sessione_attiva'), null);
             }
-            await set(ref(db, 'sessione_attiva'), null);
+            window.location.href = "esercizi.html";
         }
-        window.location.href = "esercizi.html";
-    }
 
-    function showFinalResults() {
-        document.getElementById('exercise-iframe').style.display = "none";
-        document.getElementById('top-bar').style.display = "none";
-        
-        const resultsScreen = document.getElementById('results-screen');
-        resultsScreen.style.display = "flex";
-        
-        document.getElementById('paziente-concluso').textContent = `Paziente: ${activeSession.pazienteNome}`;
-        
-        const list = document.getElementById('final-stats');
-        list.innerHTML = "";
-        
-        activeSession.esercizi.forEach((es, i) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
-            list.appendChild(li);
-        });
+        function showFinalResults() {
+            document.getElementById('exercise-iframe').style.display = "none";
+            document.getElementById('top-bar').style.display = "none";
+            
+            const resultsScreen = document.getElementById('results-screen');
+            resultsScreen.style.display = "flex";
+            
+            document.getElementById('paziente-concluso').textContent = `Paziente: ${activeSession.pazienteNome}`;
+            
+            const list = document.getElementById('final-stats');
+            list.innerHTML = "";
+            
+            activeSession.esercizi.forEach((es) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span><i class="fa-solid fa-check" style="color: #10b981;"></i> ${es.titolo}</span> <span style="font-weight: bold; color: #10b981;">Completato</span>`;
+                list.appendChild(li);
+            });
 
-        const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
-        push(storicoRef, {
-            data: new Date().toISOString(),
-            tipo: "Sessione Pianificata Completa",
-            eserciziSvolti: activeSession.esercizi
-        }).then(async () => {
-            await set(ref(db, 'sessione_attiva'), null);
-        });
-    }
-</script>
+            const storicoRef = ref(db, `storico_pazienti/${activeSession.pazienteId}/sessioni`);
+            push(storicoRef, {
+                data: new Date().toISOString(),
+                tipo: "Sessione Pianificata Completa",
+                eserciziSvolti: activeSession.esercizi
+            }).then(async () => {
+                await set(ref(db, 'sessione_attiva'), null);
+            });
+        }
+    </script>
 </body>
 </html>
