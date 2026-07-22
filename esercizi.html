@@ -123,6 +123,24 @@
         .kpi-info h4 { font-size: 0.75rem; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
         .kpi-info p { font-size: 1.6rem; font-weight: 700; color: var(--slate-900); letter-spacing: -0.5px; }
 
+        /* --- STELLE GRAFICHE NELLA KPI --- */
+        .kpi-stars-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            margin-top: 2px;
+        }
+        .kpi-stars-container .star-filled { color: #f59e0b; }
+        .kpi-stars-container .star-half { color: #f59e0b; }
+        .kpi-avg-text {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            margin-left: 6px;
+        }
+
         /* --- CLINICAL PANEL --- */
         #clinical-panel {
             background: #ffffff;
@@ -317,6 +335,7 @@
                 <i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> 00:00:00
             </div>
             <div id="user-display" class="user-badge">Ospite</div>
+            <!-- Tasto Termina Sessione posizionato in alto a destra -->
             <button class="btn btn-danger btn-sm" id="btn-termina-sessione-nav" onclick="terminaSessioneGlobale()" style="display: none;">
                 <i class="fa-solid fa-flag-checkered"></i> Termina Sessione
             </button>
@@ -358,7 +377,15 @@
                 <div class="kpi-icon"><i class="fa-solid fa-star"></i></div>
                 <div class="kpi-info">
                     <h4>Media Soddisfazione</h4>
-                    <p id="kpi-media-stelle">-</p>
+                    <!-- Box delle stelline dinamiche -->
+                    <div id="kpi-media-stelle" class="kpi-stars-container">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <span class="kpi-avg-text">-</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -912,7 +939,7 @@
 
             if (modalita === 'free_training') {
                 document.getElementById('user-display').innerText = `👤 Utente: ${username}`;
-                document.getElementById('kpi-modalita').innerText = "Training Libero";
+                // Nasconde completamente la console clinica in modalità training libero
                 document.getElementById('clinical-panel').style.display = 'none'; 
                 
                 document.getElementById('btn-termina-sessione-nav').style.display = 'inline-flex';
@@ -930,7 +957,6 @@
 
             } else if (modalita === 'clinical') {
                 document.getElementById('user-display').innerText = `🩺 Clinico: ${username}`;
-                document.getElementById('kpi-modalita').innerText = "Area Clinica";
                 document.getElementById('clinical-panel').style.display = 'block'; 
                 document.getElementById('kpi-svolti').innerText = "-"; 
 
@@ -939,9 +965,12 @@
                 document.getElementById('guidelines-text').innerText = "Seleziona un paziente dall'Area Clinica per abilitare il report e la programmazione.";
             }
 
-            // Ascolta e calcola la media globale delle valutazioni salvate nel database
+            // Ascolta e calcola la media globale delle valutazioni salvate nel database per renderizzare le stelline grafiche
             const feedbackRef = ref(db, 'questionari_autovalutazione');
             onValue(feedbackRef, (snapshot) => {
+                const containerStelle = document.getElementById('kpi-media-stelle');
+                if (!containerStelle) return;
+
                 if (snapshot.exists()) {
                     let totalScoreSum = 0;
                     let totalCount = 0;
@@ -953,14 +982,29 @@
                             totalCount++;
                         }
                     });
+
                     if (totalCount > 0) {
-                        const overallAverage = (totalScoreSum / totalCount).toFixed(1);
-                        document.getElementById('kpi-media-stelle').innerText = `${overallAverage} / 5 ⭐`;
+                        const overallAverage = totalScoreSum / totalCount;
+                        const roundedAvg = overallAverage.toFixed(1);
+                        
+                        // Generazione grafica delle 5 stelline in base al punteggio medio
+                        let starsHTML = "";
+                        for (let i = 1; i <= 5; i++) {
+                            if (overallAverage >= i) {
+                                starsHTML += `<i class="fa-solid fa-star star-filled"></i>`;
+                            } else if (overallAverage >= i - 0.5) {
+                                starsHTML += `<i class="fa-solid fa-star-half-stroke star-half"></i>`;
+                            } else {
+                                starsHTML += `<i class="fa-regular fa-star"></i>`;
+                            }
+                        }
+                        starsHTML += `<span class="kpi-avg-text">${roundedAvg} / 5</span>`;
+                        containerStelle.innerHTML = starsHTML;
                     } else {
-                        document.getElementById('kpi-media-stelle').innerText = "N/D";
+                        containerStelle.innerHTML = `<i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><span class="kpi-avg-text">N/D</span>`;
                     }
                 } else {
-                    document.getElementById('kpi-media-stelle').innerText = "N/D";
+                    containerStelle.innerHTML = `<i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><i class="fa-regular fa-star"></i><span class="kpi-avg-text">N/D</span>`;
                 }
             });
         });
@@ -972,15 +1016,17 @@
             
             if (snapshot.exists()) {
                 activeSessionState = snapshot.val();
-                statusBar.style.display = "flex";
-                if (activeSessionState.tipo === 'libera') {
-                    statusText.textContent = `Paziente attivo in SESSIONE LIBERA: ${activeSessionState.pazienteNome}. Clicca su un esercizio sotto per registrarlo.`;
-                } else {
-                    statusText.textContent = `Paziente attivo in SESSIONE PIANIFICATA: ${activeSessionState.pazienteNome}.`;
+                if(statusBar) {
+                    statusBar.style.display = "flex";
+                    if (activeSessionState.tipo === 'libera') {
+                        statusText.textContent = `Paziente attivo in SESSIONE LIBERA: ${activeSessionState.pazienteNome}. Clicca su un esercizio sotto per registrarlo.`;
+                    } else {
+                        statusText.textContent = `Paziente attivo in SESSIONE PIANIFICATA: ${activeSessionState.pazienteNome}.`;
+                    }
                 }
             } else {
                 activeSessionState = null;
-                statusBar.style.display = "none";
+                if(statusBar) statusBar.style.display = "none";
             }
         });
 
@@ -1342,7 +1388,6 @@
             }).then(() => {
                 alert("Grazie per aver completato il questionario! Le risposte sono state salvate con successo.");
                 document.getElementById('feedback-modal').style.display = 'none';
-                // Reset delle stelline
                 currentRatings = { q1: 0, q2: 0, q3: 0 };
                 document.querySelectorAll('.star-btn').forEach(btn => btn.classList.remove('active'));
             }).catch(err => {
