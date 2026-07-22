@@ -80,9 +80,11 @@
             transform: scale(1.05);
         }
         
+        .nav-left-cluster { display: flex; align-items: center; gap: 14px; }
         .nav-right-cluster { display: flex; align-items: center; gap: 14px; }
         .global-timer-badge { background: #f8fafc; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 16px; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
         .user-badge { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 8px 20px; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; }
+        
         .btn-exit { background: #f1f5f9; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #e2e8f0; color: var(--slate-900); }
 
@@ -325,21 +327,19 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
+    <!-- NAVBAR COERENTE CON LATO SINISTRO (Torna) E LATO DESTRO (Cronometro, Utente, Termina Sessione) -->
     <nav class="navbar">
-        <div class="nav-logo">
-            <img src="logo.png" alt="CogniLab Logo" onerror="this.style.display='none'"> CogniLab
+        <div class="nav-left-cluster">
+            <button class="btn-exit" onclick="tornaAllaHome()"><i class="fa-solid fa-arrow-left"></i> Torna agli esercizi</button>
         </div>
         <div class="nav-right-cluster">
             <div class="global-timer-badge" id="global-timer">
                 <i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> 00:00:00
             </div>
             <div id="user-display" class="user-badge">Ospite</div>
-            <!-- Tasto Termina Sessione posizionato in alto a destra -->
-            <button class="btn btn-danger btn-sm" id="btn-termina-sessione-nav" onclick="terminaSessioneGlobale()" style="display: none;">
+            <button class="btn btn-danger btn-sm" id="btn-termina-sessione-nav" onclick="terminaSessioneGlobale()">
                 <i class="fa-solid fa-flag-checkered"></i> Termina Sessione
             </button>
-            <button class="btn-exit" onclick="tornaAllaHome()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Esci</button>
         </div>
     </nav>
 
@@ -897,7 +897,6 @@
         let activeSessionState = null;
         let performanceChartInstance = null;
         
-        // Oggetto di memorizzazione temporanea delle risposte del questionario
         let currentRatings = { q1: 0, q2: 0, q3: 0 };
 
         window.setRating = function(questionNumber, starsCount) {
@@ -913,13 +912,18 @@
             });
         }
 
-        // Cronometro Globale
-        let globalSeconds = 0;
+        // --- CRONOMETRO GLOBALE PERSISTENTE CON LOCALSTORAGE ---
+        let globalStartTime = localStorage.getItem('global_timer_start');
+        if (!globalStartTime) {
+            globalStartTime = Date.now();
+            localStorage.setItem('global_timer_start', globalStartTime);
+        }
+
         setInterval(() => {
-            globalSeconds++;
-            const hrs = Math.floor(globalSeconds / 3600).toString().padStart(2, '0');
-            const mins = Math.floor((globalSeconds % 3600) / 60).toString().padStart(2, '0');
-            const secs = (globalSeconds % 60).toString().padStart(2, '0');
+            const elapsedSeconds = Math.floor((Date.now() - parseInt(globalStartTime)) / 1000);
+            const hrs = Math.floor(elapsedSeconds / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((elapsedSeconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (elapsedSeconds % 60).toString().padStart(2, '0');
             const timerEl = document.getElementById('global-timer');
             if (timerEl) {
                 timerEl.innerHTML = `<i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> ${hrs}:${mins}:${secs}`;
@@ -939,9 +943,7 @@
 
             if (modalita === 'free_training') {
                 document.getElementById('user-display').innerText = `👤 Utente: ${username}`;
-                // Nasconde completamente la console clinica in modalità training libero
                 document.getElementById('clinical-panel').style.display = 'none'; 
-                
                 document.getElementById('btn-termina-sessione-nav').style.display = 'inline-flex';
                 
                 document.getElementById('welcome-heading').innerText = `Bentornato, ${username}!`;
@@ -965,7 +967,6 @@
                 document.getElementById('guidelines-text').innerText = "Seleziona un paziente dall'Area Clinica per abilitare il report e la programmazione.";
             }
 
-            // Ascolta e calcola la media globale delle valutazioni salvate nel database per renderizzare le stelline grafiche
             const feedbackRef = ref(db, 'questionari_autovalutazione');
             onValue(feedbackRef, (snapshot) => {
                 const containerStelle = document.getElementById('kpi-media-stelle');
@@ -987,7 +988,6 @@
                         const overallAverage = totalScoreSum / totalCount;
                         const roundedAvg = overallAverage.toFixed(1);
                         
-                        // Generazione grafica delle 5 stelline in base al punteggio medio
                         let starsHTML = "";
                         for (let i = 1; i <= 5; i++) {
                             if (overallAverage >= i) {
@@ -1360,6 +1360,7 @@
 
         window.terminaSessioneGlobale = function() {
             if (confirm("Vuoi concludere l'allenamento di oggi e visualizzare il questionario di autovalutazione?")) {
+                localStorage.removeItem('global_timer_start'); // Pulisce il cronometro globale
                 document.getElementById('feedback-modal').style.display = 'flex';
             }
         }
