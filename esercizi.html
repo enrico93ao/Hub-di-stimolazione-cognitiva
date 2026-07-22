@@ -80,12 +80,33 @@
             transform: scale(1.05);
         }
         
+        .nav-right-cluster { display: flex; align-items: center; gap: 14px; }
+        .global-timer-badge { background: #f8fafc; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 16px; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
         .user-badge { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 8px 20px; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; }
         .btn-exit { background: #f1f5f9; border: 1px solid #cbd5e1; color: var(--slate-800); padding: 8px 20px; border-radius: 14px; cursor: pointer; font-weight: 600; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
         .btn-exit:hover { background: #e2e8f0; color: var(--slate-900); }
 
+        /* --- BANNER DI BENVENUTO E INDICAZIONI --- */
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 30px 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow-premium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .welcome-text h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .welcome-text p { font-size: 1rem; color: #94a3b8; line-height: 1.5; font-weight: 400; }
+        .session-guidelines { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); padding: 16px 22px; border-radius: 16px; min-width: 300px; }
+        .session-guidelines h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #38bdf8; margin-bottom: 6px; }
+        .session-guidelines p { font-size: 0.9rem; color: #e2e8f0; font-weight: 500; }
+
         /* --- CONTATORI DASHBOARD (KPI) --- */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin: 40px 0; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-bottom: 40px; }
         .kpi-card { 
             background: #ffffff; 
             border: 1px solid #e2e8f0;
@@ -221,6 +242,46 @@
         .area-visuo .card:hover .tag { background: #f3e8ff; color: #7c3aed; }
         .area-orientamento .card:hover { border-color: #67e8f9; }
         .area-orientamento .card:hover .tag { background: #ecfeff; color: #0891b2; }
+
+        /* --- MODALE DI AUTOVALUTAZIONE --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-card h3 { font-size: 1.4rem; color: var(--slate-900); font-weight: 800; margin-bottom: 12px; }
+        .modal-card p { font-size: 0.95rem; color: var(--slate-400); margin-bottom: 24px; line-height: 1.5; }
+        .rating-faces { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .face-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            width: 64px; height: 64px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .face-btn:hover { background: #eff6ff; border-color: var(--primary-light); transform: translateY(-4px); }
     </style>
 </head>
 <body>
@@ -230,13 +291,28 @@
         <div class="nav-logo">
             <img src="logo.png" alt="CogniLab Logo" onerror="this.style.display='none'"> CogniLab
         </div>
-        <div style="display: flex; align-items: center; gap: 18px;">
+        <div class="nav-right-cluster">
+            <div class="global-timer-badge" id="global-timer">
+                <i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> 00:00:00
+            </div>
             <div id="user-display" class="user-badge">Ospite</div>
             <button class="btn-exit" onclick="tornaAllaHome()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Esci</button>
         </div>
     </nav>
 
     <div class="container">
+
+        <!-- --- MESSAGGIO DI BENVENUTO E INDICAZIONI SESSIONE --- -->
+        <div class="welcome-banner">
+            <div class="welcome-text">
+                <h1 id="welcome-heading">Bentornato nel tuo Hub Cognitivo</h1>
+                <p id="welcome-subtext">Seleziona un'area di allenamento sottostante oppure segui le indicazioni della sessione clinica attiva per iniziare il percorso di stimolazione.</p>
+            </div>
+            <div class="session-guidelines">
+                <h4><i class="fa-solid fa-circle-info"></i> Linee Guida Sessione</h4>
+                <p id="guidelines-text">Mantieni un ritmo costante e concentrati sull'accuratezza prima che sulla velocità di esecuzione.</p>
+            </div>
+        </div>
         
         <!-- DASHBOARD DI SESSIONE (KPI) -->
         <div class="kpi-grid">
@@ -702,6 +778,21 @@
 
     </div>
 
+    <!-- Modale di Autovalutazione -->
+    <div id="feedback-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>Come valuti questa sessione?</h3>
+            <p>Esprimi il tuo grado di soddisfazione o affaticamento per aiutarci a calibrare il percorso cognitivo.</p>
+            <div class="rating-faces">
+                <button class="face-btn" onclick="submitFeedback(5)">😊</button>
+                <button class="face-btn" onclick="submitFeedback(4)">🙂</button>
+                <button class="face-btn" onclick="submitFeedback(3)">😐</button>
+                <button class="face-btn" onclick="submitFeedback(2)">🙁</button>
+            </div>
+            <button class="btn btn-sm" onclick="closeFeedbackModal()" style="background: #f1f5f9; color: var(--slate-700);">Salta per ora</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK e Logiche Integrate -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
@@ -724,6 +815,19 @@
         let activeSessionState = null;
         let performanceChartInstance = null;
 
+        // Cronometro Globale
+        let globalSeconds = 0;
+        setInterval(() => {
+            globalSeconds++;
+            const hrs = Math.floor(globalSeconds / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((globalSeconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (globalSeconds % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById('global-timer');
+            if (timerEl) {
+                timerEl.innerHTML = `<i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> ${hrs}:${mins}:${secs}`;
+            }
+        }, 1000);
+
         document.addEventListener("DOMContentLoaded", function() {
             const modalita = localStorage.getItem('hub_mode');
             const username = localStorage.getItem('hub_username') || "Utente";
@@ -740,6 +844,11 @@
                 document.getElementById('kpi-modalita').innerText = "Training Libero";
                 document.getElementById('clinical-panel').style.display = 'none'; 
                 
+                // Messaggio di benvenuto personalizzato
+                document.getElementById('welcome-heading').innerText = `Bentornato, ${username}!`;
+                document.getElementById('welcome-subtext').innerText = "Scegli liberamente gli esercizi che preferisci completare oggi per mantenere allenate le tue abilità cognitive.";
+                document.getElementById('guidelines-text').innerText = "Modalità Libera attiva: puoi completare quanti esercizi desideri senza vincoli temporali.";
+
                 document.querySelectorAll('.select-exercise-checkbox').forEach(c => c.style.display = 'none');
                 
                 if(!localStorage.getItem('exercises_done_counter')) {
@@ -752,6 +861,10 @@
                 document.getElementById('kpi-modalita').innerText = "Area Clinica";
                 document.getElementById('clinical-panel').style.display = 'block'; 
                 document.getElementById('kpi-svolti').innerText = "-"; 
+
+                document.getElementById('welcome-heading').innerText = `Pannello di Controllo Clinico, Dott. ${username}`;
+                document.getElementById('welcome-subtext').innerText = "Gestisci i pazienti registrati, crea pianificazioni di esercizi personalizzate e monitora i grafici di andamento clinico.";
+                document.getElementById('guidelines-text').innerText = "Seleziona un paziente dall'Area Clinica per abilitare il report e la programmazione.";
             }
         });
 
@@ -1088,7 +1201,6 @@
                     document.querySelectorAll('.select-exercise-checkbox').forEach(c => c.checked = false);
                     updateQueue();
                     
-                    // Reindirizza al sistema di caricamento tramite esercizio.html per il primo esercizio pianificato
                     window.location.href = `esercizio.html`;
                 });
             }
@@ -1098,19 +1210,29 @@
             if (confirm("Sei sicuro di voler chiudere la sessione attiva?")) {
                 set(activeSessionRef, null).then(() => {
                     alert("Sessione terminata con successo.");
+                    // Mostra la modale di autovalutazione alla chiusura
+                    document.getElementById('feedback-modal').style.display = 'flex';
                 });
             }
         }
 
-        // Funzione corretta per reindirizzare a esercizio.html caricando il file effettivo
         window.openExerciseCard = function(cardElement, event) {
             if (event.target.classList.contains('select-exercise-checkbox')) {
                 return;
             }
             const file = cardElement.getAttribute('data-file');
             
-            // Reindirizzamento diretto a esercizio.html passando il file dell'esercizio via GET
+            // Mostra la modale di autovalutazione prima di procedere o consentila in uscita
             window.location.href = `esercizio.html?file=${encodeURIComponent(file)}`;
+        }
+
+        window.submitFeedback = function(score) {
+            alert(`Grazie per il tuo feedback! Punteggio registrato: ${score}/5`);
+            document.getElementById('feedback-modal').style.display = 'none';
+        }
+
+        window.closeFeedbackModal = function() {
+            document.getElementById('feedback-modal').style.display = 'none';
         }
     </script>
 
