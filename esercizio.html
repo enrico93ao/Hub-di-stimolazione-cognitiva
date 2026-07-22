@@ -3,185 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esercizio - Hub Cognitivo</title>
+    <title>Esercizio Cognitivo | Hub di Stimolazione Cognitiva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; background-color: #f8fafc; }
-        
-        #top-bar { height: 80px; background-color: #ffffff; color: #1e293b; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
-        
-        .top-bar-left, .top-bar-right { flex: 1; display: flex; align-items: center; gap: 15px; }
-        .top-bar-right { justify-content: flex-end; }
-        .top-bar-center { flex: 1; display: flex; justify-content: center; align-items: center; }
-        
-        .logo-container img {
-            max-height: 65px;
-            width: auto;
-            object-fit: contain;
+        :root {
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #475569;
+            --slate-400: #64748b;
+            --slate-100: #f8fafc;
+            --primary-light: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
         }
 
-        .btn-action { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-action:hover { background-color: #e2e8f0; color: #0f172a; }
-        
-        .btn-next { background-color: #10b981; color: white; border: none; }
-        .btn-next:hover { background-color: #059669; color: white; }
-        
-        .btn-danger { background-color: #ffeeef; color: #dc2626; border-color: #fecaca; }
-        .btn-danger:hover { background-color: #fef2f2; color: #b91c1c; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+        }
 
-        .btn-libero { background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
-        .btn-libero:hover { background-color: #dbeafe; color: #1d4ed8; }
+        body { 
+            background: #f8fafc; 
+            color: var(--slate-900); 
+            min-height: 100vh; 
+            display: flex;
+            flex-direction: column;
+        }
 
-        #exercise-title { font-size: 1.05rem; font-weight: 600; color: #334155; text-align: right; }
-        #exercise-iframe { flex-grow: 1; width: 100%; height: calc(100% - 80px); border: none; background: #ffffff; }
+        /* --- NAVBAR COERENTE CON LA DASHBOARD --- */
+        .navbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0; 
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .nav-left-cluster { display: flex; align-items: center; gap: 14px; }
+        .nav-right-cluster { display: flex; align-items: center; gap: 14px; }
+        
+        .global-timer-badge { 
+            background: #f8fafc; 
+            border: 1px solid #cbd5e1; 
+            color: var(--slate-800); 
+            padding: 8px 16px; 
+            border-radius: 9999px; 
+            font-weight: 700; 
+            font-size: 0.9rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        
+        .user-badge { 
+            background: #ecfdf5; 
+            border: 1px solid #a7f3d0; 
+            color: #065f46; 
+            padding: 8px 20px; 
+            border-radius: 9999px; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+        }
+        
+        .btn-exit { 
+            background: #f1f5f9; 
+            border: 1px solid #cbd5e1; 
+            color: var(--slate-800); 
+            padding: 8px 20px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: var(--transition); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .btn-exit:hover { background: #e2e8f0; color: var(--slate-900); }
+
+        .btn { background: var(--slate-900); color: white; border: none; padding: 14px 26px; border-radius: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        .btn:hover { background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+        .btn-sm { padding: 8px 14px; font-size: 0.85rem; border-radius: 10px; }
+
+        /* --- CONTENITORE PRINCIPALE DELL'ESERCIZIO --- */
+        .exercise-workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .iframe-container {
+            flex: 1;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow: var(--shadow-premium);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 75vh;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            flex-grow: 1;
+        }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <div class="top-bar-left">
-            <button class="btn-action btn-danger" id="back-home-btn" onclick="exitSession()">
-                <i class="fa-solid fa-arrow-left"></i> <span id="back-btn-text">Torna all'Hub</span>
-            </button>
+    <!-- NAVBAR SINCRONIZZATA CON LA DASHBOARD -->
+    <nav class="navbar">
+        <div class="nav-left-cluster">
+            <a href="esercizi.html" class="btn-exit"><i class="fa-solid fa-arrow-left"></i> Torna alla Dashboard</a>
         </div>
-
-        <div class="top-bar-center">
-            <div class="logo-container">
-                <img src="logo.png" alt="Logo Hub Cognitivo">
+        <div class="nav-right-cluster">
+            <div class="global-timer-badge" id="global-timer">
+                <i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> 00:00:00
             </div>
-        </div>
-
-        <div class="top-bar-right">
-            <div id="exercise-title">Caricamento in corso...</div>
-            <button class="btn-action btn-next" id="next-btn" style="display: none;" onclick="nextStep()">
-                Avanti <i class="fa-solid fa-arrow-right"></i>
+            <div id="user-display" class="user-badge">Ospite</div>
+            <button class="btn btn-danger btn-sm" onclick="terminaSessioneGlobale()">
+                <i class="fa-solid fa-flag-checkered"></i> Termina Sessione
             </button>
+        </div>
+    </nav>
+
+    <!-- WORKSPACE ESERCIZIO -->
+    <div class="exercise-workspace">
+        <div class="iframe-container">
+            <iframe id="exercise-frame" src="" title="Area Esercizio Cognitivo"></iframe>
         </div>
     </div>
 
-    <iframe id="exercise-iframe" src=""></iframe>
-
-    <!-- Firebase SDK e Logica per il caricamento dell'esercizio -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBBChH3sFfhwE4waQTzERtKGytJrucYEFM",
-            authDomain: "hub-di-stimolazione-cognitiva.firebaseapp.com",
-            databaseURL: "https://hub-di-stimolazione-cognitiva-default-rtdb.firebaseio.com",
-            projectId: "hub-di-stimolazione-cognitiva",
-            storageBucket: "hub-di-stimolazione-cognitiva.firebasestorage.app",
-            messagingSenderId: "593673504352",
-            appId: "1:593673504352:web:9d4a194109ec7061e6e505",
-            measurementId: "G-6JTPBYQYPE"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        let activeSession = null;
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            const params = new URLSearchParams(window.location.search);
-            const fileDirect = params.get('file');
-            const localUsername = localStorage.getItem('hub_username') || "Utente";
-
-            const titleEl = document.getElementById('exercise-title');
-            const backBtn = document.getElementById('back-home-btn');
-            const backBtnText = document.getElementById('back-btn-text');
-            const nextBtn = document.getElementById('next-btn');
-
-            // 1. MODALITÀ TRAINING LIBERO (tramite parametro file nell'URL)
-            if (fileDirect) {
-                const esFile = decodeURIComponent(fileDirect);
-                document.getElementById('exercise-iframe').src = esFile;
-                
-                const formattedName = esFile.replace('.html', '').replace(/_/g, ' ');
-                const exerciseReadableName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
-
-                // Mantiene continuità mostrando lo username e il contesto di training libero
-                titleEl.textContent = `${localUsername} (Libero) ➔ ${exerciseReadableName}`;
-                
-                // Configura il pulsante di ritorno per l'archivio esercizi
-                backBtn.className = "btn-action btn-libero";
-                backBtnText.textContent = "Torna agli esercizi";
-                backBtn.onclick = function() {
-                    window.location.href = "esercizi.html";
-                };
-                nextBtn.style.display = "none";
-                return;
-            }
-
-            // 2. MODALITÀ AREA CLINICA / GUIDATA (tramite Firebase)
-            try {
-                const sessionRef = ref(db, 'sessione_attiva');
-                const snapshot = await get(sessionRef);
-
-                if (snapshot.exists()) {
-                    activeSession = snapshot.val();
-                    if (activeSession.tipo === 'libera') {
-                        window.location.href = "esercizi.html";
-                    } else {
-                        loadCurrentExerciseFromSession();
-                    }
-                } else {
-                    window.location.href = "esercizi.html";
-                }
-            } catch (error) {
-                console.error("Errore di connessione a Firebase:", error);
-                window.location.href = "esercizi.html";
-            }
-        });
-
-        function loadCurrentExerciseFromSession() {
-            if (!activeSession) return;
-            const index = activeSession.indiceCorrente || 0;
-            const esercizi = activeSession.esercizi;
-
-            if (esercizi && index < esercizi.length) {
-                const esercizioAttivo = esercizi[index];
-                document.getElementById('exercise-iframe').src = esercizioAttivo.file;
-                
-                // Mantiene continuità mostrando il nome del paziente e il progresso clinico
-                const nomePaziente = activeSession.pazienteNome || localStorage.getItem('hub_username') || 'Paziente';
-                document.getElementById('exercise-title').textContent = `${nomePaziente} (Clinica) ➔ Esercizio ${index + 1} di ${esercizi.length}: ${esercizioAttivo.titolo}`;
-                document.getElementById('next-btn').style.display = "inline-flex";
-            } else {
-                window.location.href = "esercizi.html";
-            }
-        }
-
-        window.nextStep = async function() {
-            if (!activeSession) return;
-            const index = activeSession.indiceCorrente;
-            const sessionRef = ref(db, 'sessione_attiva');
-            const nuovoIndice = index + 1;
-            
-            await update(sessionRef, { indiceCorrente: nuovoIndice });
-            activeSession.indiceCorrente = nuovoIndice;
-            loadCurrentExerciseFromSession();
-        }
-
-        window.exitSession = function() {
-            window.location.href = "esercizi.html";
-        }
-    </script>
-
-    <!-- Script per rimuovere la barra interna duplicata dall'iframe -->
     <script>
-        document.getElementById('exercise-iframe').addEventListener('load', function() {
-            try {
-                const iframeDoc = this.contentWindow.document;
-                const internalTopBar = iframeDoc.querySelector('#top-bar, header, .navbar, .top-header');
-                if (internalTopBar) {
-                    internalTopBar.style.display = 'none';
-                }
-            } catch (e) {
-                console.log("Impossibile accedere al DOM dell'iframe a causa di restrizioni cross-origin.");
+        // --- GESTIONE CRONOMETRO GLOBALE PERSISTENTE ---
+        let globalStartTime = localStorage.getItem('global_timer_start');
+        if (!globalStartTime) {
+            globalStartTime = Date.now();
+            localStorage.setItem('global_timer_start', globalStartTime);
+        }
+
+        setInterval(() => {
+            const elapsedSeconds = Math.floor((Date.now() - parseInt(globalStartTime)) / 1000);
+            const hrs = Math.floor(elapsedSeconds / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((elapsedSeconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (elapsedSeconds % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById('global-timer');
+            if (timerEl) {
+                timerEl.innerHTML = `<i class="fa-regular fa-clock" style="color: var(--primary-light);"></i> ${hrs}:${mins}:${secs}`;
+            }
+        }, 1000);
+
+        // --- CARICAMENTO DATI UTENTE E PARAMETRO ESERCIZIO ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const username = localStorage.getItem('hub_username') || "Utente";
+            const modalita = localStorage.getItem('hub_mode');
+            
+            if (modalita === 'clinical') {
+                document.getElementById('user-display').innerText = `🩺 Clinico: ${username}`;
+            } else {
+                document.getElementById('user-display').innerText = `👤 Utente: ${username}`;
+            }
+
+            // Recupera il file dell'esercizio dai parametri URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const exerciseFile = urlParams.get('file');
+
+            if (exerciseFile) {
+                document.getElementById('exercise-frame').src = decodeURIComponent(exerciseFile);
+            } else {
+                // Se aperto da sessione pianificata o senza parametro diretto
+                document.getElementById('exercise-frame').src = "Attenzione%20alternata.html"; 
             }
         });
+
+        function terminaSessioneGlobale() {
+            if (confirm("Vuoi concludere l'allenamento di oggi e tornare alla schermata principale?")) {
+                localStorage.removeItem('global_timer_start');
+                window.location.href = 'index.html';
+            }
+        }
     </script>
 </body>
 </html>
