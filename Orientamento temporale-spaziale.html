@@ -35,14 +35,12 @@
             background-color: #f0fdf4;
             animation: pop 0.3s ease-out;
         }
-        /* Effetto pulsante standard per livello base */
         .slot.active-target {
             border-color: #2563eb;
             background-color: #eff6ff;
             box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
             animation: pulse-border 1.5s infinite;
         }
-        /* Effetto super-facile con accoppiamento a colori dorato */
         .slot.active-super-target {
             border-color: #d97706;
             background-color: #fffbeb;
@@ -143,7 +141,6 @@
         </div>
     </header>
 
-    <!-- Indicatore dello stato di sincronizzazione Firebase -->
     <div id="sync-indicator" class="bg-amber-100 text-amber-800 text-xs text-center py-1 font-bold border-b border-amber-200">
         Sincronizzazione database in corso...
     </div>
@@ -160,7 +157,7 @@
                 <button onclick="toggleSettings(false)" class="text-slate-400 hover:text-slate-600 text-3xl font-bold">&times;</button>
             </div>
             
-            <p class="text-sm text-slate-500 mb-6">Usa questo pannello per allineare l'applicazione con la reale data e posizione del paziente, qualora il GPS o l'ora del sistema fossero errati.</p>
+            <p class="text-sm text-slate-500 mb-6">Usa questo pannello per allineare l'applicazione con la reale data e posizione del paziente.</p>
             
             <div class="space-y-4">
                 <div>
@@ -195,10 +192,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, collection, query, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Esponiamo le funzioni Firebase globalmente in sicurezza per l'interazione degli script di gioco
         window.firebaseApp = null;
         window.db = null;
         window.auth = null;
@@ -212,8 +208,6 @@
         window.getDocs = getDocs;
         window.query = query;
 
-        // Recupero parametri globali dell'Immersive
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'mente-attiva';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -224,7 +218,6 @@
 
         async function initFirebase() {
             if (!firebaseConfig) {
-                console.warn("Configurazione Firebase non trovata. Funzionamento locale abilitato.");
                 if (indicator) {
                     indicator.textContent = "Sincronizzazione Database disattivata (Configurazione assente)";
                     indicator.className = "bg-slate-200 text-slate-600 text-xs text-center py-1 font-bold";
@@ -233,7 +226,6 @@
             }
 
             try {
-                // Inizializzazione App
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
@@ -242,7 +234,6 @@
                 window.auth = auth;
                 window.db = db;
 
-                // RULE 3: Autenticazione preventiva prima delle interrogazioni
                 let userCredential;
                 if (initialAuthToken) {
                     userCredential = await signInWithCustomToken(auth, initialAuthToken);
@@ -257,11 +248,10 @@
                     indicator.textContent = `Sincronizzato con il database (Utente: ${window.currentUser.uid})`;
                     indicator.className = "bg-green-100 text-green-800 text-xs text-center py-1 font-bold border-b border-green-200";
                 }
-                console.log("Firebase collegato con successo.");
             } catch (error) {
                 console.error("Inizializzazione Firebase fallita:", error);
                 if (indicator) {
-                    indicator.textContent = "Errore di connessione con il database Cloud. Salvataggi solo in locale.";
+                    indicator.textContent = "Modalità Offline attiva (Salvataggio locale pronto).";
                     indicator.className = "bg-red-100 text-red-800 text-xs text-center py-1 font-bold border-b border-red-200";
                 }
             }
@@ -327,7 +317,12 @@
         async function detectLocation() {
             const headerLoc = document.getElementById('header-location');
             try {
-                const response = await fetch('https://ipapi.co/json/');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // Timeout di sicurezza a 3 secondi
+                
+                const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data && data.city) {
@@ -467,25 +462,21 @@
                 <div class="text-center py-4">
                     <h2 class="text-3xl md:text-4xl font-extrabold mb-8 text-slate-800 uppercase">Seleziona il livello di gioco:</h2>
                     <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-4">
-                        
                         <button onclick="setDifficulty('super-easy')" class="btn-large bg-white border-pink-500 p-8 rounded-[2.5rem] shadow-lg hover:bg-pink-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">🌸</span>
                             <span class="text-2xl font-black text-pink-700 uppercase">SUPER FACILE</span>
-                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">4 domande (Giorno, Numero, Mese, Anno). Nessun distrattore, accoppiamento dorato intuitivo.</p>
+                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">4 domande (Giorno, Numero, Mese, Anno). Nessun distrattore.</p>
                         </button>
-                        
                         <button onclick="setDifficulty('base')" class="btn-large bg-white border-green-600 p-8 rounded-[2.5rem] shadow-lg hover:bg-green-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">⭐</span>
                             <span class="text-2xl font-black text-green-700 uppercase">BASE</span>
-                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">5 domande, 3 opzioni semplificate, evidenziazione blu sequenziale della casella attiva.</p>
+                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">5 domande, 3 opzioni semplificate, evidenziazione blu.</p>
                         </button>
-                        
                         <button onclick="setDifficulty('advanced')" class="btn-large bg-white border-blue-600 p-8 rounded-[2.5rem] shadow-lg hover:bg-blue-50 flex flex-col items-center">
                             <span class="text-6xl mb-4">🏆</span>
                             <span class="text-2xl font-black text-blue-700 uppercase">SFIDA</span>
-                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">5 domande, 5 opzioni diverse, nessun aiuto o evidenziazione visiva.</p>
+                            <p class="text-sm text-slate-600 mt-3 font-medium leading-relaxed">5 domande, 5 opzioni diverse, nessun aiuto visivo.</p>
                         </button>
-                        
                     </div>
                 </div>
             `;
@@ -502,10 +493,7 @@
 
         function renderTemporal(container) {
             const data = state.correctData;
-            
-            let count = 3;
-            if (state.difficulty === 'super-easy') count = 1; 
-            if (state.difficulty === 'advanced') count = 5;
+            let count = (state.difficulty === 'super-easy') ? 1 : ((state.difficulty === 'advanced') ? 5 : 3);
 
             const weekdayOptions = generateOptions(data.weekday, count, 'weekday').map(v => ({val: v, type: 'weekday'}));
             const dayOptions = generateOptions(data.day, count, 'number').map(v => ({val: v, type: 'day'}));
@@ -518,12 +506,9 @@
                 : allSeasons;
             const seasonOptions = selectedSeasons.map(v => ({val: v, type: 'season'}));
 
-            let listToShuffle = [];
-            if (state.difficulty === 'super-easy') {
-                listToShuffle = [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions];
-            } else {
-                listToShuffle = [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions, ...seasonOptions];
-            }
+            let listToShuffle = (state.difficulty === 'super-easy') 
+                ? [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions]
+                : [...weekdayOptions, ...dayOptions, ...monthOptions, ...yearOptions, ...seasonOptions];
 
             const allDraggables = shuffle(listToShuffle);
             
@@ -531,14 +516,7 @@
                 ? ['weekday', 'day', 'month', 'year'] 
                 : ['weekday', 'day', 'month', 'year', 'season'];
 
-            const labels = {
-                weekday: 'Giorno Sett.',
-                day: 'Numero',
-                month: 'Mese',
-                year: 'Anno',
-                season: 'Stagione'
-            };
-            
+            const labels = { weekday: 'Giorno Sett.', day: 'Numero', month: 'Mese', year: 'Anno', season: 'Stagione' };
             const activeSlotType = state.activeSlotType;
 
             container.innerHTML = `
@@ -562,17 +540,11 @@
                             ${sequence.map(type => {
                                 const isActive = type === activeSlotType;
                                 const isCorrect = state.answers[type] !== null;
-                                
-                                let activeClass = '';
-                                if (isActive) {
-                                    activeClass = state.difficulty === 'super-easy' ? 'active-super-target' : 'active-target';
-                                }
-
+                                let activeClass = isActive ? (state.difficulty === 'super-easy' ? 'active-super-target' : 'active-target') : '';
                                 let placeholderContent = '<span class="text-slate-300 font-bold uppercase text-[11px]">Seleziona</span>';
                                 if (isActive && state.difficulty === 'super-easy') {
                                     placeholderContent = `<span class="text-amber-500/40 font-black uppercase text-sm">Cerca:<br>${state.correctData[type].toUpperCase()}</span>`;
                                 }
-
                                 return `
                                 <div class="space-y-2 flex-1">
                                     <label class="text-xs font-black uppercase ml-2 block h-5 text-center ${isActive ? (state.difficulty === 'super-easy' ? 'active-super-label' : 'active-label') : 'text-slate-400'}">
@@ -590,23 +562,19 @@
                     </div>
 
                     <div class="bg-slate-200 p-6 rounded-[2.5rem] shadow-inner">
-                        <p class="text-center text-slate-600 font-bold mb-4 uppercase text-sm">Tocca o trascina la tessera corretta per completare la casella luminosa:</p>
+                        <p class="text-center text-slate-600 font-bold mb-4 uppercase text-sm">Tocca o trascina la tessera corretta:</p>
                         <div class="flex flex-wrap justify-center gap-3">
                             ${allDraggables.map((item, idx) => {
                                 const val = item.val;
                                 const type = item.type;
                                 const isUsed = state.answers[type] === val;
-                                
-                                let superEasyStyleClass = '';
-                                if (state.difficulty === 'super-easy' && type === activeSlotType && val.toLowerCase() === state.correctData[type].toLowerCase()) {
-                                    superEasyStyleClass = 'correct-super-tile';
-                                }
+                                let superEasyStyleClass = (state.difficulty === 'super-easy' && type === activeSlotType && val.toLowerCase() === state.correctData[type].toLowerCase()) ? 'correct-super-tile' : '';
 
                                 return `
                                 <div id="drag-${idx}" 
                                      draggable="true" 
                                      ondragstart="drag(event)" 
-                                     onclick="handleSelection('${idx}', '${val}', '${type}')"
+                                     onclick="handleSelection('${idx}', '${val.replace(/'/g, "\\'")}', '${type}')"
                                      data-value="${val}"
                                      data-type="${type}"
                                      style="${isUsed ? 'display:none' : ''}"
@@ -634,15 +602,7 @@
 
             if (type !== activeSlot) {
                 playSound('error');
-                if(dragEl) {
-                    dragEl.classList.add('error-shake');
-                    setTimeout(() => dragEl.classList.remove('error-shake'), 400);
-                }
-                const targetSlot = document.getElementById(`slot-${activeSlot}`);
-                if(targetSlot) {
-                    targetSlot.classList.add('error-shake');
-                    setTimeout(() => targetSlot.classList.remove('error-shake'), 400);
-                }
+                if(dragEl) { dragEl.classList.add('error-shake'); setTimeout(() => dragEl.classList.remove('error-shake'), 400); }
                 return;
             }
 
@@ -652,10 +612,7 @@
                 render(); 
             } else {
                 playSound('error');
-                if(dragEl) {
-                    dragEl.classList.add('error-shake');
-                    setTimeout(() => dragEl.classList.remove('error-shake'), 400);
-                }
+                if(dragEl) { dragEl.classList.add('error-shake'); setTimeout(() => dragEl.classList.remove('error-shake'), 400); }
             }
         }
 
@@ -676,12 +633,7 @@
             if (draggedType === slotType && slotType === state.activeSlotType) {
                 handleSelection(id.replace('drag-', ''), val, slotType);
             } else {
-                const dragEl = document.getElementById(id);
                 playSound('error');
-                if(dragEl) {
-                    dragEl.classList.add('error-shake');
-                    setTimeout(() => dragEl.classList.remove('error-shake'), 400);
-                }
             }
         }
 
@@ -702,59 +654,55 @@
             const m = ['GENNAIO', 'FEBBRAIO', 'MARZO', 'APRILE', 'MAGGIO', 'GIUGNO', 'LUGLIO', 'AGOSTO', 'SETTEMBRE', 'OTTOBRE', 'NOVEMBRE', 'DICEMBRE'];
             const w = ['LUNEDÌ', 'MARTEDÌ', 'MERCOLEDÌ', 'GIOVEDÌ', 'VENERDÌ', 'SABATO', 'DOMENICA'];
             
-            while (options.length < count) {
-                let random;
-                if (type === 'weekday') {
-                    random = w[Math.floor(Math.random() * w.length)];
-                } else if (type === 'number') {
-                    let val = Math.max(1, Math.min(31, parseInt(correct) + (Math.floor(Math.random() * 5) - 2)));
-                    random = val.toString();
-                } else if (type === 'month') {
-                    random = m[Math.floor(Math.random() * 12)];
-                } else if (type === 'year') {
-                    random = (parseInt(correct) + (Math.floor(Math.random() * 3) - 1)).toString();
+            let pool = [];
+            if (type === 'weekday') pool = w;
+            else if (type === 'month') pool = m;
+            else if (type === 'number') {
+                let baseNum = parseInt(correct);
+                pool = [];
+                for(let i = baseNum - 3; i <= baseNum + 3; i++) {
+                    if(i >= 1 && i <= 31) pool.push(i.toString());
                 }
-                if (!options.includes(random)) options.push(random);
+            } else if (type === 'year') {
+                let baseYear = parseInt(correct);
+                pool = [(baseYear - 1).toString(), baseYear.toString(), (baseYear + 1).toString(), (baseYear + 2).toString(), (baseYear - 2).toString()];
             }
-            return options;
+
+            // Filtra l'elemento corretto ed effettua il mischiosicuro senza rischi di loop infinito
+            let filtered = shuffle(pool.filter(item => item.toUpperCase() !== correct.toUpperCase()));
+            
+            for(let i = 0; i < filtered.length && options.length < count; i++) {
+                options.push(filtered[i]);
+            }
+            return shuffle(options);
         }
 
         function generateCityOptions(correct, count) {
             const list = ['Roma', 'Milano', 'Napoli', 'Venezia', 'Bari', 'Bologna', 'Firenze', 'Aosta', 'Palermo'];
             let opts = [correct];
-            
-            if (state.difficulty === 'super-easy') {
-                return [correct];
-            }
+            if (state.difficulty === 'super-easy') return [correct];
 
-            while (opts.length < count) {
-                const randomCity = list[Math.floor(Math.random() * list.length)];
-                if (!opts.some(c => c.toLowerCase() === randomCity.toLowerCase())) {
-                    opts.push(randomCity);
-                }
+            let filtered = shuffle(list.filter(c => c.toLowerCase() !== correct.toLowerCase()));
+            for(let i = 0; i < filtered.length && opts.length < count; i++) {
+                opts.push(filtered[i]);
             }
             return shuffle(opts);
         }
 
         function renderSpatialCity(container) {
-            let count = 3;
-            if (state.difficulty === 'super-easy') count = 1;
-            if (state.difficulty === 'advanced') count = 5;
-            
+            let count = (state.difficulty === 'super-easy') ? 1 : ((state.difficulty === 'advanced') ? 5 : 3);
             const cityOptions = generateCityOptions(state.customCity, count);
 
             container.innerHTML = `
                 <div class="space-y-8 text-center max-w-2xl mx-auto">
                     <div class="bg-blue-50 p-6 rounded-3xl border-4 border-blue-200">
                         <h2 class="text-3xl font-extrabold text-blue-900 uppercase">In quale città ti trovi ora?</h2>
-                        <p class="text-lg text-blue-700 mt-2 font-medium">Seleziona il luogo corretto dove ti trovi in questo momento.</p>
-                        ${state.difficulty === 'super-easy' ? '<p class="text-sm text-amber-600 font-bold mt-2">💡 Suggerimento: Guarda la testata in alto a destra!</p>' : ''}
+                        <p class="text-lg text-blue-700 mt-2 font-medium">Seleziona il luogo corretto dove ti trovi.</p>
                     </div>
                     <div class="grid gap-4 w-full">
                         ${cityOptions.map(city => {
                             const isCorrect = city.toLowerCase() === state.customCity.toLowerCase();
                             const superEasyHighlight = (state.difficulty === 'super-easy' && isCorrect) ? 'border-amber-500 bg-amber-50 shadow-md animate-pulse' : '';
-
                             return `
                             <button onclick="checkCity('${city.replace(/'/g, "\\'")}')" id="btn-city-${city.replace(/[^a-zA-Z0-9]/g, '')}" 
                                 class="btn-large ${superEasyHighlight} bg-white border-slate-300 p-6 rounded-2xl text-2xl font-black hover:bg-blue-50 uppercase shadow-md w-full">
@@ -772,16 +720,11 @@
             const btn = document.getElementById(cleanId);
             
             if (selected.toLowerCase() === state.customCity.toLowerCase()) {
-                if (btn) {
-                    btn.className = "btn-large bg-green-600 border-green-800 text-white p-6 rounded-2xl text-2xl font-black uppercase shadow-lg w-full";
-                }
+                if (btn) btn.className = "btn-large bg-green-600 border-green-800 text-white p-6 rounded-2xl text-2xl font-black uppercase shadow-lg w-full";
                 playSound('success');
                 setTimeout(() => { state.step = 'spatial-room'; render(); }, 1200);
             } else {
-                if (btn) {
-                    btn.classList.add('error-shake');
-                    setTimeout(() => btn.classList.remove('error-shake'), 400);
-                }
+                if (btn) { btn.classList.add('error-shake'); setTimeout(() => btn.classList.remove('error-shake'), 400); }
                 playSound('error');
             }
         }
@@ -792,26 +735,21 @@
                 <div class="space-y-8 text-center max-w-4xl mx-auto">
                     <div class="bg-purple-50 p-6 rounded-3xl border-4 border-purple-200">
                         <h2 class="text-3xl font-extrabold text-purple-900 uppercase">In quale stanza della casa ci si lava i denti?</h2>
-                        <p class="text-lg text-purple-700 mt-2 font-medium">Premi il bottone della stanza corretta per compiere questa azione.</p>
                     </div>
                     <div class="${isSuperEasy ? 'flex justify-center' : 'grid md:grid-cols-3'} gap-6">
                         <button onclick="checkRoom('bagno')" id="room-bagno" class="btn-large ${isSuperEasy ? 'border-amber-500 bg-amber-50 w-full max-w-md' : 'border-slate-300 bg-white'} p-8 rounded-3xl flex flex-col items-center shadow-lg hover:bg-indigo-50">
                             <span class="text-7xl mb-4">🛁</span>
                             <span class="text-2xl font-black uppercase">Il Bagno</span>
-                            ${isSuperEasy ? '<span class="text-xs text-amber-600 font-bold mt-2">💡 Scegli me!</span>' : ''}
                         </button>
-                        
                         ${!isSuperEasy ? `
                         <button onclick="checkRoom('cucina')" id="room-cucina" class="btn-large border-slate-300 bg-white p-8 rounded-3xl flex flex-col items-center shadow-lg hover:bg-indigo-50">
                             <span class="text-7xl mb-4">🍳</span>
                             <span class="text-2xl font-black uppercase">La Cucina</span>
                         </button>
-                        
                         <button onclick="checkRoom('camera')" id="room-camera" class="btn-large border-slate-300 bg-white p-8 rounded-3xl flex flex-col items-center shadow-lg hover:bg-indigo-50">
                             <span class="text-7xl mb-4">🛏️</span>
                             <span class="text-2xl font-black uppercase">La Camera</span>
-                        </button>
-                        ` : ''}
+                        </button>` : ''}
                     </div>
                 </div>
             `;
@@ -842,17 +780,13 @@
                     <div class="relative bg-slate-100 rounded-[3rem] p-4 w-full h-[400px] shadow-inner border-8 border-slate-200 overflow-hidden">
                         <div class="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-4 p-4">
                             <div class="bg-slate-200 rounded-3xl flex items-center justify-center text-slate-400 font-black uppercase text-xl">Bagno</div>
-                            
                             <div id="target-kitchen" ondrop="dropMap(event)" ondragover="allowDrop(event)" onclick="moveMap()"
                                  class="bg-orange-100 border-4 ${isSuperEasy ? 'border-amber-500 border-solid bg-amber-50 animate-pulse' : 'border-dashed border-orange-400'} rounded-3xl flex flex-col items-center justify-center text-orange-600 font-black text-2xl uppercase cursor-pointer hover:bg-orange-200 transition-colors">
                                 CUCINA
-                                ${isSuperEasy ? '<span class="text-sm text-amber-600 mt-2 font-bold">🎯 TOCCA O TRASCINA QUI</span>' : ''}
                             </div>
-                            
                             <div class="bg-slate-200 rounded-3xl flex items-center justify-center text-slate-400 font-black uppercase text-xl">Soggiorno</div>
                             <div class="bg-slate-200 rounded-3xl flex items-center justify-center text-slate-400 font-black uppercase text-xl">Camera</div>
                         </div>
-                        
                         <div id="user-avatar" draggable="true" ondragstart="drag(event)" data-value="tu" onclick="moveMap()"
                              class="absolute bottom-10 right-10 bg-white text-indigo-700 w-24 h-24 flex flex-col items-center justify-center rounded-full shadow-2xl cursor-move z-10 border-4 border-indigo-600 font-black hover:scale-105 transition-transform">
                              <span class="text-3xl animate-bounce">📍</span> TU
@@ -878,13 +812,11 @@
         }
 
         async function salvaRisultatiFirebase() {
-            // Calcolo metriche standard
             const numeroTotaleDomande = state.difficulty === 'super-easy' ? 7 : 8; 
             const accuratezzaPercentuale = Math.max(10, Math.min(100, Math.round((numeroTotaleDomande / state.metrics.totalAttempts) * 100)));
             const tempoImpiegatoInSecondi = Math.round((Date.now() - state.metrics.startTime) / 1000);
             const punteggioGrezzoGenerale = Math.max(0, numeroTotaleDomande * 10 - (state.metrics.totalAttempts - numeroTotaleDomande) * 2);
 
-            // STRUTTURA STANDARD DI SALVATAGGIO DEI DATI DELL'ESERCIZIO
             const datiEsercizio = {
                 titolo: "Orientamento Cognitivo",
                 risultati: {
@@ -902,119 +834,48 @@
                 statusEl.className = "text-sm text-amber-600 font-bold block animate-pulse";
             }
 
-            // Estrazione parametri da URL
             const urlParams = new URLSearchParams(window.location.search);
             const isSessioneActive = urlParams.get('sessione') === 'true';
             const urlPazienteId = urlParams.get('pazienteId') || urlParams.get('userId');
             const sessionId = urlParams.get('sessionId');
-            const sessionType = urlParams.get('type') || 'libera'; 
 
-            // Risoluzione pazienteId con fallback
-            let patientId = urlPazienteId;
-            if (!patientId && window.currentUser) {
-                patientId = window.currentUser.uid;
-            }
-            if (!patientId) {
-                patientId = 'anon-paziente';
-            }
-
+            let patientId = urlPazienteId || (window.currentUser ? window.currentUser.uid : 'anon-paziente');
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'mente-attiva';
 
-            // Salvataggio locale se Firebase non è attivo
             if (!window.dbReady || !window.db) {
-                console.warn("Database non pronto. Salvataggio locale simulato:", datiEsercizio);
                 if (statusEl) {
-                    statusEl.textContent = "Salvataggio locale completato con successo (Modalità Offline).";
+                    statusEl.textContent = "Salvato in locale (Modalità Offline).";
                     statusEl.className = "text-sm text-green-600 font-bold block";
                 }
                 return;
             }
 
             try {
-                // RULE 1: Percorso rigoroso privato /artifacts/{appId}/users/{userId}/{collectionName}/{documentId}
-                if (isSessioneActive) {
-                    if (sessionType === 'pianificata' && sessionId) {
-                        const sessionDocRef = window.doc(window.db, 'artifacts', appId, 'users', patientId, 'sessioni', sessionId);
-                        const sessionDoc = await window.getDoc(sessionDocRef);
+                if (isSessioneActive && sessionId) {
+                    const sessionDocRef = window.doc(window.db, 'artifacts', appId, 'users', patientId, 'sessioni', sessionId);
+                    const sessionDoc = await window.getDoc(sessionDocRef);
 
-                        if (sessionDoc.exists()) {
-                            const sessionData = sessionDoc.data();
-                            let esercizi = sessionData.esercizi || [];
-                            let updated = false;
+                    if (sessionDoc.exists()) {
+                        const sessionData = sessionDoc.data();
+                        let esercizi = sessionData.esercizi || [];
+                        let updated = false;
 
-                            for (let i = 0; i < esercizi.length; i++) {
-                                if (esercizi[i].titolo === "Orientamento Cognitivo" && !esercizi[i].completato) {
-                                    esercizi[i].risultati = datiEsercizio.risultati;
-                                    esercizi[i].completato = true;
-                                    updated = true;
-                                    break;
-                                }
+                        for (let i = 0; i < esercizi.length; i++) {
+                            if (esercizi[i].titolo === "Orientamento Cognitivo" && !esercizi[i].completato) {
+                                esercizi[i].risultati = datiEsercizio.risultati;
+                                esercizi[i].completato = true;
+                                updated = true;
+                                break;
                             }
-
-                            if (!updated) {
-                                esercizi.push({
-                                    ...datiEsercizio,
-                                    completato: true,
-                                    dataCompletamento: new Date().toISOString()
-                                });
-                            }
-
-                            await window.updateDoc(sessionDocRef, { esercizi: esercizi });
-                            console.log("Sessione pianificata aggiornata con successo.");
-                        } else {
-                            await window.setDoc(sessionDocRef, {
-                                pazienteId: patientId,
-                                tipo: 'pianificata',
-                                dataCreazione: new Date().toISOString(),
-                                esercizi: [{
-                                    ...datiEsercizio,
-                                    completato: true,
-                                    dataCompletamento: new Date().toISOString()
-                                }]
-                            });
-                            console.log("Nuovo documento sessione pianificata generato e aggiornato.");
                         }
-                    } else {
-                        // Sessione Libera: inserimento diretto in storico_pazienti/{pazienteId}/sessioni (mappato secondo RULE 1 in users/{patientId}/sessioni)
-                        const sessionsColRef = window.collection(window.db, 'artifacts', appId, 'users', patientId, 'sessioni');
-                        const q = window.query(sessionsColRef); 
-                        const querySnapshot = await window.getDocs(q);
-                        
-                        let latestSessionDoc = null;
-                        let latestTime = 0;
-
-                        querySnapshot.forEach((doc) => {
-                            const data = doc.data();
-                            const time = data.dataCreazione ? new Date(data.dataCreazione).getTime() : 0;
-                            if (time > latestTime && data.tipo === 'libera') {
-                                latestTime = time;
-                                latestSessionDoc = doc;
-                            }
-                        });
-
-                        if (latestSessionDoc) {
-                            const sessionDocRef = window.doc(window.db, 'artifacts', appId, 'users', patientId, 'sessioni', latestSessionDoc.id);
-                            await window.updateDoc(sessionDocRef, {
-                                eserciziSvolti: window.arrayUnion(datiEsercizio)
-                            });
-                            console.log("Esercizio aggiunto all'array eserciziSvolti della sessione libera attiva.");
-                        } else {
-                            await window.addDoc(sessionsColRef, {
-                                pazienteId: patientId,
-                                tipo: 'libera',
-                                dataCreazione: new Date().toISOString(),
-                                eserciziSvolti: [datiEsercizio]
-                            });
-                            console.log("Nuova sessione libera creata e primo esercizio popolato.");
+                        if (!updated) {
+                            esercizi.push({ ...datiEsercizio, completato: true, dataCompletamento: new Date().toISOString() });
                         }
+                        await window.updateDoc(sessionDocRef, { esercizi: esercizi });
                     }
                 } else {
                     const historyColRef = window.collection(window.db, 'artifacts', appId, 'users', patientId, 'storico_esercizi');
-                    await window.addDoc(historyColRef, {
-                        ...datiEsercizio,
-                        dataCompletamento: new Date().toISOString()
-                    });
-                    console.log("Salvataggio esterno completato nello storico generale del paziente.");
+                    await window.addDoc(historyColRef, { ...datiEsercizio, dataCompletamento: new Date().toISOString() });
                 }
 
                 if (statusEl) {
@@ -1022,10 +883,10 @@
                     statusEl.className = "text-sm text-green-600 font-bold block";
                 }
             } catch (error) {
-                console.error("Errore durante il salvataggio dei dati su Firebase:", error);
+                console.error("Errore salvataggio Firebase:", error);
                 if (statusEl) {
-                    statusEl.textContent = "Errore durante il salvataggio dei risultati su Firebase.";
-                    statusEl.className = "text-sm text-red-500 font-bold block";
+                    statusEl.textContent = "Continuazione consentita (Errore salvataggio Cloud).";
+                    statusEl.className = "text-sm text-amber-600 font-bold block";
                 }
             }
         }
@@ -1034,7 +895,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const patientId = urlParams.get('pazienteId') || urlParams.get('userId') || '';
             const sessionId = urlParams.get('sessionId') || '';
-            window.location.href = `index.html?pazienteId=${patientId}&sessionId=${sessionId}&esercizioCompletato=OrientamentoCognitivo`;
+            window.location.href = `esercizio.html?file=Orientamento%2520temporale-spaziale.html&pazienteId=${patientId}&sessionId=${sessionId}`;
         }
 
         function renderFinal(container) {
@@ -1046,12 +907,9 @@
                     <p class="text-2xl text-slate-700 leading-relaxed font-medium">
                         Ti sei orientato perfettamente.<br>Hai completato tutti gli esercizi con successo.
                     </p>
-                    
-                    <!-- Area Feedback per il salvataggio dei risultati -->
                     <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200">
                         <span id="fb-save-status" class="text-sm text-slate-500 font-bold block">In attesa del salvataggio dei dati...</span>
                     </div>
-
                     <div class="flex flex-col sm:flex-row justify-center gap-4 pt-4">
                         <button onclick="reindirizzaHub()" class="btn-large flex-1 bg-green-600 border-green-800 hover:bg-green-700 text-white py-5 px-6 rounded-full text-xl font-black shadow-xl uppercase">
                             Prosegui Sessione
@@ -1062,17 +920,13 @@
                     </div>
                 </div>
             `;
-            // Trigger del salvataggio dati standardizzato al completamento dell'esercizio
             salvaRisultatiFirebase();
         }
 
         function resetApp() {
             state.step = 'difficulty';
             state.answers = { weekday: null, day: null, month: null, year: null, season: null };
-            state.metrics = {
-                startTime: null,
-                totalAttempts: 0
-            };
+            state.metrics = { startTime: null, totalAttempts: 0 };
             render();
         }
 
